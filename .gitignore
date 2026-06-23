@@ -1,0 +1,6 @@
+node_modules/
+template/node_modules/
+dist/
+template/dist/
+template/public/data/site-data.json
+template/public/assets/

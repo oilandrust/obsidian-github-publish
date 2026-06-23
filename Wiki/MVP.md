@@ -1,0 +1,54 @@
+# Pitch
+Publish your vault for free in 60s
+
+# Template
+The output should look like Obsidian or Obsidian publish
+On the left a browser with folders and notes, and other files like images that can be viewed in the main document view, skip the right panel, skip search for now
+![[publish-example-dark.png]]
+# Tech
+Pluggin allow to publish changes: creates a PR + merge on a repository
+Repository contains copy of the published notes + scripts + web template
+Script on push/merge: Notes X Template -> build static website, github actions make visible
+Static website/template: React based, maybe using next.js, can start as a single page with embeded json to populate
+
+Next.js + react + hydration + router → better for analytics
+Cheaper solution? nest.js + react
+→ make sure I get the idea correctly
+
+Example of portfolio project hosted on github to inspire from:
+portfolio/
+portfolio-psy/
+# Onboarding in the pluggin
+1. Choose folder you want to publish
+2. Choose a name for your website
+3. authenticate in github, give autorisations
+4. Create or choose repository
+5. App automatically creates PR, merges, clones template, build website, install github actions, sets the repository as Github Page, publish
+6. Site is live
+# Validation
+Build a quick template and build scripts -> 1 prompt, notes already present on the repo
+Have Cursor setup github actions
+Make it online, note steps
+Make actions run on publish
+build pluggin with onboarding step and check that it's all doable
+# Analytics
+- Unique users
+- Publish actions
+- Live / Active sites
+
+# Steps:
+- Build a simple template and build script, test it on catsnake-web 
+
+Out of Scope:
+# Premium
+Choose from a few built-in templates
+Custom CSS
+Page customization by coding agent
+Login from portfolio page, automatic via github login, only for the user
+Subscription on my website
+
+
+
+
+
+
