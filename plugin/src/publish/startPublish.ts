@@ -1,7 +1,10 @@
 import { Notice } from 'obsidian';
 import GitHubPublishPlugin from '../../main';
-import { SetupConfig } from '../settings';
+import { log } from '../log';
+import { isSitePublished, SetupConfig } from '../settings';
+import { countDiffChanges } from './diffVault';
 import { runInitialPublish } from './initialPublish';
+import { detectUnpublishedChanges, runPublishChanges } from './publishChanges';
 import { ProgressModal } from '../ui/ProgressModal';
 
 export function saveSetupConfig(plugin: GitHubPublishPlugin, config: SetupConfig): void {
@@ -48,7 +51,48 @@ export function startPublish(plugin: GitHubPublishPlugin, config?: SetupConfig):
       await plugin.saveSettings();
       new Notice(`Site published: ${result.liveUrl}`);
     },
+    { mode: 'full' },
   );
 
   progress.open();
+}
+
+export function startPublishChanges(plugin: GitHubPublishPlugin): void {
+  log('Publish changes requested');
+  const token = plugin.settings.accessToken;
+
+  if (!token) {
+    new Notice('Connect to GitHub in plugin settings first.');
+    return;
+  }
+
+  if (!isSitePublished(plugin.settings)) {
+    new Notice('Complete initial publish before publishing changes.');
+    return;
+  }
+
+  const progress = new ProgressModal(
+    plugin.app,
+    token,
+    (onProgress) => runPublishChanges(plugin.app, token, plugin.settings, onProgress),
+    async (result) => {
+      plugin.settings.lastPublishedCommitSha = result.commitSha;
+      plugin.settings.manifest = result.manifest;
+      await plugin.saveSettings();
+      new Notice(`Changes published: ${result.liveUrl}`);
+    },
+    { mode: 'incremental' },
+  );
+
+  progress.open();
+}
+
+export async function hasUnpublishedChanges(plugin: GitHubPublishPlugin): Promise<boolean> {
+  if (!isSitePublished(plugin.settings) || !plugin.settings.contentFolder) {
+    return false;
+  }
+
+  const result = await detectUnpublishedChanges(plugin.app, plugin.settings);
+  if (!result) return false;
+  return countDiffChanges(result.diff) > 0;
 }

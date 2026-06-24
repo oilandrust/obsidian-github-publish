@@ -1,10 +1,19 @@
-import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, ButtonComponent, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { fetchGitHubUser } from './src/github/auth';
 import { connectGitHub } from './src/github/connect';
-import { DEFAULT_SETTINGS, PluginSettings } from './src/settings';
+import { checkPublishStatus, StatusCheck } from './src/github/publishStatus';
+import {
+  DEFAULT_SETTINGS,
+  getPublishedLiveUrl,
+  getPublishedRepoUrl,
+  isSitePublished,
+  PluginSettings,
+} from './src/settings';
 import { SetupModal } from './src/ui/SetupModal';
 import { getPluginDir } from './src/publish/initialPublish';
-import { startPublish } from './src/publish/startPublish';
+import { detectUnpublishedChanges } from './src/publish/publishChanges';
+import { startPublish, startPublishChanges } from './src/publish/startPublish';
+import { countDiffChanges } from './src/publish/diffVault';
 
 export default class GitHubPublishPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
@@ -23,6 +32,12 @@ export default class GitHubPublishPlugin extends Plugin {
       id: 'continue-publish',
       name: 'Continue publish',
       callback: () => startPublish(this),
+    });
+
+    this.addCommand({
+      id: 'publish-changes',
+      name: 'Publish changes',
+      callback: () => startPublishChanges(this),
     });
 
     this.addRibbonIcon('globe', 'GitHub Publish setup', () => {
@@ -54,6 +69,7 @@ export default class GitHubPublishPlugin extends Plugin {
 class GitHubPublishSettingTab extends PluginSettingTab {
   private connecting = false;
   private deviceUserCode: string | null = null;
+  private statusCheckId = 0;
 
   constructor(app: App, private readonly plugin: GitHubPublishPlugin) {
     super(app, plugin);
@@ -61,6 +77,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
 
   display(): void {
     const { containerEl } = this;
+    this.statusCheckId++;
     containerEl.empty();
 
     containerEl.createEl('h2', { text: 'GitHub Publish' });
@@ -137,44 +154,155 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       }
     }
 
-    if (this.plugin.settings.repo && this.plugin.settings.owner) {
-      containerEl.createEl('h3', { text: 'Published site' });
-      containerEl.createEl('p', {
-        text: `https://${this.plugin.settings.owner}.github.io/${this.plugin.settings.repo}/`,
-      });
-    }
-
-    const saved = this.plugin.settings.savedSetup;
-    if (saved) {
-      containerEl.createEl('h3', { text: 'Saved setup' });
-      const summary = containerEl.createEl('dl', { cls: 'github-publish-summary' });
-      this.addSummaryRow(summary, 'Site name', saved.siteName);
-      this.addSummaryRow(summary, 'Vault folder', saved.contentFolder);
-      this.addSummaryRow(
-        summary,
-        'Repository',
-        saved.repoMode === 'create' ? `Create: ${saved.repoName}` : `Existing: ${saved.repoName}`,
-      );
-      this.addSummaryRow(
-        summary,
-        'Live URL',
-        `https://${this.plugin.settings.githubUsername ?? 'user'}.github.io/${saved.repoName}/`,
-      );
-
-      new Setting(containerEl).addButton((btn) =>
-        btn.setButtonText('Continue publish').setCta().onClick(() => {
-          if (!this.plugin.settings.accessToken) {
-            new Notice('Connect to GitHub in settings first.');
-            return;
-          }
-          startPublish(this.plugin);
-        }),
-      );
+    if (isSitePublished(this.plugin.settings)) {
+      this.renderPublishedSite(containerEl);
+    } else {
+      const saved = this.plugin.settings.savedSetup;
+      if (saved) {
+        this.renderSavedSetup(containerEl, saved);
+      }
     }
 
     new Setting(containerEl).addButton((btn) =>
       btn.setButtonText('Open setup wizard').onClick(() => {
         new SetupModal(this.app, this.plugin).open();
+      }),
+    );
+  }
+
+  private renderPublishedSite(containerEl: HTMLElement): void {
+    const { settings } = this.plugin;
+    const liveUrl = getPublishedLiveUrl(settings);
+    const repoUrl = getPublishedRepoUrl(settings);
+    const checkId = this.statusCheckId;
+
+    containerEl.createEl('h3', { text: 'Published site' });
+    const summary = containerEl.createEl('dl', { cls: 'github-publish-summary' });
+    this.addSummaryRow(summary, 'Site name', settings.siteName ?? '—');
+    this.addSummaryRow(summary, 'Vault folder', settings.contentFolder ?? '—');
+
+    summary.createEl('dt', { text: 'Repository' });
+    const repoValue = summary.createEl('dd');
+    const repoStatus = repoValue.createSpan({ cls: 'github-publish-status github-publish-status-checking' });
+    repoStatus.setText('Checking…');
+    if (repoUrl) {
+      repoValue.createEl('br');
+      const link = repoValue.createEl('a', {
+        cls: 'github-publish-live-link',
+        href: repoUrl,
+        text: repoUrl,
+      });
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    }
+
+    summary.createEl('dt', { text: 'Live site' });
+    const liveValue = summary.createEl('dd');
+    const liveStatus = liveValue.createSpan({ cls: 'github-publish-status github-publish-status-checking' });
+    liveStatus.setText('Checking…');
+    if (liveUrl) {
+      liveValue.createEl('br');
+      const link = liveValue.createEl('a', {
+        cls: 'github-publish-live-link',
+        href: liveUrl,
+        text: liveUrl,
+      });
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    }
+
+    summary.createEl('dt', { text: 'Changes' });
+    const changesValue = summary.createEl('dd');
+    const changesStatus = changesValue.createSpan({
+      cls: 'github-publish-status github-publish-status-checking',
+    });
+    changesStatus.setText('Checking for changes…');
+
+    let publishChangesBtn: ButtonComponent | null = null;
+    const publishChangesSetting = new Setting(containerEl).addButton((btn) => {
+      publishChangesBtn = btn;
+      btn.setButtonText('Publish changes').setCta();
+      btn.setDisabled(true);
+      btn.onClick(() => {
+        if (!this.plugin.settings.accessToken) {
+          new Notice('Connect to GitHub in settings first.');
+          return;
+        }
+        startPublishChanges(this.plugin);
+      });
+    });
+
+    if (liveUrl && settings.owner && settings.repo) {
+      void checkPublishStatus(settings.accessToken, settings.owner, settings.repo, liveUrl).then(
+        (result) => {
+          if (checkId !== this.statusCheckId) return;
+          this.applyStatusCheck(repoStatus, result.repository);
+          this.applyStatusCheck(liveStatus, result.liveSite);
+        },
+      );
+    }
+
+    if (settings.contentFolder) {
+      void detectUnpublishedChanges(this.plugin.app, settings).then((result) => {
+        if (checkId !== this.statusCheckId) return;
+        if (!result) {
+          changesStatus.removeClass('github-publish-status-checking');
+          changesStatus.addClass('github-publish-status-error');
+          changesStatus.setText('Unable to check for changes');
+          return;
+        }
+
+        const hasChanges = countDiffChanges(result.diff) > 0;
+        changesStatus.removeClass(
+          'github-publish-status-checking',
+          'github-publish-status-live',
+          'github-publish-status-unreachable',
+        );
+        changesStatus.addClass(
+          hasChanges ? 'github-publish-changes-pending' : 'github-publish-status-live',
+        );
+        changesStatus.setText(result.summary);
+
+        publishChangesBtn?.setDisabled(!hasChanges);
+        publishChangesSetting.setDesc(
+          hasChanges ? 'Unpublished changes detected in your vault folder.' : '',
+        );
+      });
+    }
+  }
+
+  private applyStatusCheck(element: HTMLElement, check: StatusCheck): void {
+    element.removeClass('github-publish-status-checking', 'github-publish-status-live', 'github-publish-status-unreachable', 'github-publish-status-error');
+    element.addClass(`github-publish-status-${check.status}`);
+    const statusLabel =
+      check.status === 'live'
+        ? 'Live'
+        : check.status === 'unreachable'
+          ? 'Unreachable'
+          : check.status === 'error'
+            ? 'Error'
+            : 'Checking…';
+    element.setText(`${statusLabel} — ${check.detail}`);
+  }
+
+  private renderSavedSetup(containerEl: HTMLElement, saved: NonNullable<PluginSettings['savedSetup']>): void {
+    containerEl.createEl('h3', { text: 'Saved setup' });
+    const summary = containerEl.createEl('dl', { cls: 'github-publish-summary' });
+    this.addSummaryRow(summary, 'Site name', saved.siteName);
+    this.addSummaryRow(summary, 'Vault folder', saved.contentFolder);
+    this.addSummaryRow(
+      summary,
+      'Repository',
+      saved.repoMode === 'create' ? `Create: ${saved.repoName}` : `Existing: ${saved.repoName}`,
+    );
+
+    new Setting(containerEl).addButton((btn) =>
+      btn.setButtonText('Continue publish').setCta().onClick(() => {
+        if (!this.plugin.settings.accessToken) {
+          new Notice('Connect to GitHub in settings first.');
+          return;
+        }
+        startPublish(this.plugin);
       }),
     );
   }

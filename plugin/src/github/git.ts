@@ -167,6 +167,133 @@ export async function createInitialCommit(
   return createCommitAndUpdateBranch(token, owner, repo, treeSha, message);
 }
 
+export async function createContentUpdateCommit(
+  token: string,
+  owner: string,
+  repo: string,
+  files: RepoFile[],
+  deletes: string[],
+  message: string,
+  onProgress?: (current: number, total: number) => void,
+): Promise<string> {
+  if (files.length === 0 && deletes.length === 0) {
+    throw new Error('No content changes to publish.');
+  }
+
+  for (const file of files) {
+    if (file.content.byteLength > MAX_FILE_BYTES) {
+      throw new Error(`File too large for GitHub (>100MB): ${file.path}`);
+    }
+  }
+
+  const totalSteps = files.length + 1;
+  let step = 0;
+
+  const attemptCommit = async (): Promise<string> => {
+    const repoInfo = await getRepo(token, owner, repo);
+    const branch = repoInfo.default_branch || 'main';
+    const branchRef = await getBranchRef(token, owner, repo, branch);
+    if (!branchRef) {
+      throw new Error(`Branch ${branch} does not exist — run initial publish first.`);
+    }
+
+    const parentSha = branchRef.object.sha;
+    const parentCommit = await githubRequest<{ tree: { sha: string } }>(
+      token,
+      'GET',
+      `/repos/${owner}/${repo}/git/commits/${parentSha}`,
+    );
+    const baseTreeSha = parentCommit.tree.sha;
+
+    const tree: FlatTreeItem[] = [];
+
+    for (const file of files) {
+      step++;
+      onProgress?.(step, totalSteps);
+
+      const blob = await githubRequestWithRetry<BlobResponse>(
+        token,
+        'POST',
+        `/repos/${owner}/${repo}/git/blobs`,
+        {
+          content:
+            file.encoding === 'utf-8'
+              ? new TextDecoder().decode(file.content)
+              : uint8ArrayToBase64(file.content),
+          encoding: file.encoding,
+        },
+        { retryStatuses: GIT_RETRY_STATUSES },
+      );
+
+      if (!blob.sha) {
+        throw new Error(`GitHub returned an empty blob SHA for ${file.path}`);
+      }
+
+      tree.push({
+        path: normalizeRepoPath(file.path),
+        mode: '100644',
+        type: 'blob',
+        sha: blob.sha,
+      });
+    }
+
+    for (const path of deletes) {
+      tree.push({
+        path: normalizeRepoPath(path),
+        mode: '100644',
+        type: 'blob',
+        sha: null,
+      });
+    }
+
+    step++;
+    onProgress?.(step, totalSteps);
+
+    log(`Creating incremental tree (${tree.length} entries) on ${baseTreeSha.slice(0, 7)}`);
+    const newTree = await githubRequestWithRetry<TreeResponse>(
+      token,
+      'POST',
+      `/repos/${owner}/${repo}/git/trees`,
+      { base_tree: baseTreeSha, tree },
+      { retryStatuses: GIT_RETRY_STATUSES },
+    );
+
+    log(`Creating content update commit on ${branch}@${parentSha.slice(0, 7)}`);
+    const commit = await githubRequestWithRetry<CommitResponse>(
+      token,
+      'POST',
+      `/repos/${owner}/${repo}/git/commits`,
+      {
+        message,
+        tree: newTree.sha,
+        parents: [parentSha],
+      },
+      { retryStatuses: GIT_RETRY_STATUSES },
+    );
+
+    await updateBranchRef(token, repoInfo.node_id, branch, commit.sha, owner, repo);
+    return commit.sha;
+  };
+
+  try {
+    return await attemptCommit();
+  } catch (error) {
+    if (error instanceof GitHubApiError && error.status === 409) {
+      logWarn('Content update commit conflict (409), retrying with fresh parent');
+      step = 0;
+      return await attemptCommit();
+    }
+    throw error;
+  }
+}
+
+interface FlatTreeItem {
+  path: string;
+  mode: '100644';
+  type: 'blob';
+  sha: string | null;
+}
+
 interface RefResponse {
   ref: string;
   node_id: string;

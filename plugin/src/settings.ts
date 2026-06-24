@@ -11,6 +11,20 @@ export interface PluginSettings {
   savedSetup: SetupConfig | null;
 }
 
+export function isSitePublished(settings: PluginSettings): boolean {
+  return Boolean(settings.owner && settings.repo && settings.lastPublishedCommitSha);
+}
+
+export function getPublishedLiveUrl(settings: PluginSettings): string | null {
+  if (!settings.owner || !settings.repo) return null;
+  return `https://${settings.owner}.github.io/${settings.repo}/`;
+}
+
+export function getPublishedRepoUrl(settings: PluginSettings): string | null {
+  if (!settings.owner || !settings.repo) return null;
+  return `https://github.com/${settings.owner}/${settings.repo}`;
+}
+
 export const DEFAULT_SETTINGS: PluginSettings = {
   clientId: '',
   accessToken: null,

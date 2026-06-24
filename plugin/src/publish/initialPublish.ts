@@ -5,6 +5,7 @@ import { createInitialCommit, ensureRepositoryReadyForGit } from '../github/git'
 import { resolveRepository } from '../github/repos';
 import { ProgressState, RepoFile, SetupConfig } from '../settings';
 import { loadToolchainFiles } from './bundleToolchain';
+import { buildContentManifest } from './diffVault';
 import { scanVaultFolder } from './scanVault';
 import { log } from '../log';
 
@@ -87,7 +88,7 @@ export async function runInitialPublish(
     },
   );
 
-  const manifest = buildManifest(allFiles.filter((f) => f.path.startsWith('content/')));
+  const manifest = buildContentManifest(allFiles);
 
   if (warnings.length > 0) {
     console.warn('GitHub Publish warnings:', warnings);
@@ -104,22 +105,6 @@ export async function runInitialPublish(
 
 function sortUploadFiles(files: RepoFile[]): RepoFile[] {
   return [...files].sort((a, b) => a.path.localeCompare(b.path));
-}
-
-function buildManifest(files: RepoFile[]): Record<string, string> {
-  const manifest: Record<string, string> = {};
-  for (const file of files) {
-    manifest[file.path] = hashBytes(file.content);
-  }
-  return manifest;
-}
-
-function hashBytes(bytes: Uint8Array): string {
-  let hash = 0;
-  for (const byte of bytes) {
-    hash = (hash * 31 + byte) >>> 0;
-  }
-  return `hash:${hash.toString(16)}`;
 }
 
 export function getPluginDir(app: App, pluginId: string): string {

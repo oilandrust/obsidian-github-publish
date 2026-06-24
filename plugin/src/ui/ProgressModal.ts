@@ -1,7 +1,9 @@
-import { App, Modal, Setting } from 'obsidian';
+import { App, Modal, Notice, Setting } from 'obsidian';
 import { pollWorkflowRun } from '../github/actions';
 import { PublishResult } from '../publish/initialPublish';
 import { ProgressPhase, ProgressState } from '../settings';
+
+export type ProgressModalMode = 'full' | 'incremental';
 
 export class ProgressModal extends Modal {
   private state: ProgressState = {
@@ -9,6 +11,7 @@ export class ProgressModal extends Modal {
     message: 'Starting…',
   };
   private lastActivePhase: ProgressPhase = 'preparing';
+  private runningInBackground = false;
 
   constructor(
     app: App,
@@ -17,6 +20,7 @@ export class ProgressModal extends Modal {
       onProgress: (state: Partial<ProgressState>) => void,
     ) => Promise<PublishResult>,
     private readonly onComplete: (result: PublishResult) => Promise<void>,
+    private readonly options?: { mode?: ProgressModalMode },
   ) {
     super(app);
   }
@@ -36,14 +40,18 @@ export class ProgressModal extends Modal {
           this.lastActivePhase = update.phase;
         }
         this.state = { ...this.state, ...update };
-        this.render();
+        if (!this.runningInBackground) {
+          this.render();
+        }
       });
 
       this.state = {
         phase: 'waiting-build',
         message: 'Waiting for GitHub Actions build…',
       };
-      this.render();
+      if (!this.runningInBackground) {
+        this.render();
+      }
 
       await pollWorkflowRun(
         this.token,
@@ -63,7 +71,9 @@ export class ProgressModal extends Modal {
               actionsUrl: run.html_url,
             };
           }
-          this.render();
+          if (!this.runningInBackground) {
+            this.render();
+          }
         },
       );
 
@@ -72,28 +82,42 @@ export class ProgressModal extends Modal {
         message: 'Your site is live!',
         liveUrl: result.liveUrl,
       };
-      this.render();
+      if (!this.runningInBackground) {
+        this.render();
+      }
 
       await this.onComplete(result);
+      if (this.runningInBackground) {
+        new Notice(`GitHub Publish: site updated — ${result.liveUrl}`);
+      }
     } catch (error) {
       this.state = {
         phase: 'error',
         message: 'Publish failed',
         error: error instanceof Error ? error.message : String(error),
       };
-      this.render();
+      if (!this.runningInBackground) {
+        this.render();
+      } else {
+        new Notice(
+          `GitHub Publish failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
     }
   }
 
-  private render(): void {
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.addClass('github-publish-modal');
+  private getPhases(): { phase: ProgressPhase; label: string }[] {
+    if (this.options?.mode === 'incremental') {
+      return [
+        { phase: 'preparing', label: 'Detect changes' },
+        { phase: 'uploading', label: 'Upload changed files' },
+        { phase: 'waiting-build', label: 'Build site (GitHub Actions)' },
+        { phase: 'waiting-deploy', label: 'Deploy to GitHub Pages' },
+        { phase: 'done', label: 'Site is live' },
+      ];
+    }
 
-    contentEl.createEl('h2', { text: 'Publishing to GitHub Pages' });
-
-    const steps = contentEl.createDiv({ cls: 'github-publish-steps' });
-    const phases: { phase: ProgressPhase; label: string }[] = [
+    return [
       { phase: 'preparing', label: 'Prepare files' },
       { phase: 'creating-repo', label: 'Create repository' },
       { phase: 'configuring-pages', label: 'Configure GitHub Pages' },
@@ -102,6 +126,21 @@ export class ProgressModal extends Modal {
       { phase: 'waiting-deploy', label: 'Deploy to GitHub Pages' },
       { phase: 'done', label: 'Site is live' },
     ];
+  }
+
+  private render(): void {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass('github-publish-modal');
+
+    const title =
+      this.options?.mode === 'incremental'
+        ? 'Publishing changes to GitHub Pages'
+        : 'Publishing to GitHub Pages';
+    contentEl.createEl('h2', { text: title });
+
+    const steps = contentEl.createDiv({ cls: 'github-publish-steps' });
+    const phases = this.getPhases();
 
     const order = phases.map((p) => p.phase);
     const failedIndex =
@@ -134,8 +173,10 @@ export class ProgressModal extends Modal {
     contentEl.createEl('p', { text: this.state.message });
 
     if (this.state.uploadTotal) {
+      const progressLabel =
+        this.options?.mode === 'incremental' ? 'Processed' : 'Prepared';
       contentEl.createEl('p', {
-        text: `Prepared ${this.state.uploadCurrent ?? 0} / ${this.state.uploadTotal} files`,
+        text: `${progressLabel} ${this.state.uploadCurrent ?? 0} / ${this.state.uploadTotal} files`,
       });
     }
 
@@ -161,7 +202,11 @@ export class ProgressModal extends Modal {
     }
 
     new Setting(contentEl).addButton((btn) =>
-      btn.setButtonText('Run in background').onClick(() => this.close()),
+      btn.setButtonText('Continue in background').onClick(() => {
+        this.runningInBackground = true;
+        new Notice('Publishing in background — you will be notified when it finishes.');
+        this.close();
+      }),
     );
   }
 }

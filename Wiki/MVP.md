@@ -26,11 +26,9 @@ portfolio-psy/
 5. App automatically creates PR, merges, clones template, build website, install github actions, sets the repository as Github Page, publish
 6. Site is live
 # Validation
-Build a quick template and build scripts -> 1 prompt, notes already present on the repo
-Have Cursor setup github actions
-Make it online, note steps
-Make actions run on publish
-build pluggin with onboarding step and check that it's all doable
+✅ The plugin pushes creates allows to login to github, asks for authorisations
+✅ Creates repository, update permissions
+✅ Push Notes and triggers build and publish, monitor progress
 # Analytics
 - Unique users
 - Publish actions
@@ -39,7 +37,8 @@ build pluggin with onboarding step and check that it's all doable
 - [x] Build a simple template and build script, test it on catsnake-web 
 - [x] Publish it on github IO, gather data
 - [x] Define / Refine push / branch / update process → [Publish Architecture.md](Publish%20Architecture.md)
-- [ ] Build the pluggin prototype and test the whole pipeline
+- [x] Build the pluggin prototype and test the whole pipeline
+	- [ ] Implement Notes update, page status tracking
 - [ ] Implement Analytics
 - [ ] Polish
 - [ ] Ship

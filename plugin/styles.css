@@ -171,8 +171,40 @@
   margin-bottom: 0.25rem;
 }
 
-.github-publish-live-url {
+.github-publish-live-url,
+.github-publish-live-link {
   font-size: 1.1rem;
   margin: 1rem 0;
   word-break: break-all;
+}
+
+.github-publish-summary .github-publish-live-link {
+  margin: 0;
+}
+
+.github-publish-status {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.github-publish-status-checking {
+  color: var(--text-muted);
+}
+
+.github-publish-status-live {
+  color: var(--text-success);
+}
+
+.github-publish-status-unreachable {
+  color: var(--text-warning);
+}
+
+.github-publish-status-error {
+  color: var(--text-error);
+}
+
+.github-publish-status-unreachable.github-publish-changes-pending {
+  color: var(--text-warning);
 }
