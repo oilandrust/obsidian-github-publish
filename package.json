@@ -6,7 +6,9 @@
     "build:demo": "node scripts/build-site.mjs --content /Users/olivier/Projects/catsnake-web --site-name \"Cat Snake\"",
     "build": "node scripts/build-site.mjs",
     "dev": "node scripts/build-site.mjs --content /Users/olivier/Projects/catsnake-web --site-name \"Cat Snake\" --skip-vite && npm run dev --prefix template",
-    "preview": "npm run preview --prefix template"
+    "preview": "npm run preview --prefix template",
+    "sync:toolchain": "node scripts/sync-toolchain.mjs",
+    "build:plugin": "npm run sync:toolchain && npm run build --prefix plugin"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",

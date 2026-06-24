@@ -1,0 +1,106 @@
+import { TAbstractFile, TFile, TFolder, Vault } from 'obsidian';
+import { RepoFile } from '../settings';
+
+const EXCLUDED_DIRS = new Set(['.git', '.obsidian', 'node_modules']);
+const EXCLUDED_FILES = new Set(['.DS_Store']);
+const SKIPPED_EXTENSIONS = new Set(['.canvas']);
+
+const INCLUDED_EXTENSIONS = new Set([
+  '.md',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.pdf',
+  '.mp3',
+]);
+
+export interface ScanResult {
+  files: RepoFile[];
+  warnings: string[];
+}
+
+export async function scanVaultFolder(vault: Vault, folderPath: string): Promise<ScanResult> {
+  const folder = vault.getAbstractFileByPath(folderPath);
+  if (!(folder instanceof TFolder)) {
+    throw new Error(`Folder not found: ${folderPath}`);
+  }
+
+  const files: RepoFile[] = [];
+  const warnings: string[] = [];
+
+  await walkFolder(vault, folder, folderPath, files, warnings);
+
+  return { files, warnings };
+}
+
+async function walkFolder(
+  vault: Vault,
+  folder: TFolder,
+  rootPath: string,
+  files: RepoFile[],
+  warnings: string[],
+): Promise<void> {
+  for (const child of folder.children) {
+    if (child instanceof TFolder) {
+      if (EXCLUDED_DIRS.has(child.name)) continue;
+      await walkFolder(vault, child, rootPath, files, warnings);
+      continue;
+    }
+
+    if (!(child instanceof TFile)) continue;
+
+    const relative = child.path.slice(rootPath.length).replace(/^\//, '');
+    const skip = shouldSkip(relative);
+    if (skip === true) continue;
+    if (typeof skip === 'string') {
+      warnings.push(skip);
+      continue;
+    }
+
+    const repoPath = `content/${child.path.slice(rootPath.length).replace(/^\//, '')}`;
+    const arrayBuffer = await vault.readBinary(child);
+    const content = new Uint8Array(arrayBuffer);
+    const ext = child.extension.toLowerCase();
+    const encoding: 'utf-8' | 'base64' = ext === 'md' ? 'utf-8' : 'base64';
+
+    files.push({ path: repoPath, content, encoding });
+  }
+}
+
+function shouldSkip(relativePath: string): true | string | false {
+  const basename = relativePath.split('/').pop() ?? relativePath;
+  if (EXCLUDED_FILES.has(basename)) return true;
+
+  const ext = '.' + (basename.split('.').pop()?.toLowerCase() ?? '');
+  if (SKIPPED_EXTENSIONS.has(ext)) return true;
+  if (relativePath.toLowerCase().endsWith('.excalidraw.md')) {
+    return `Skipping Excalidraw note: ${relativePath}`;
+  }
+
+  const fileExt = '.' + (basename.includes('.') ? basename.split('.').pop()?.toLowerCase() : '');
+  if (!INCLUDED_EXTENSIONS.has(fileExt)) return true;
+
+  return false;
+}
+
+export function countFilesInFolder(vault: Vault, folderPath: string): number {
+  const folder = vault.getAbstractFileByPath(folderPath);
+  if (!(folder instanceof TFolder)) return 0;
+
+  let count = 0;
+  const walk = (node: TAbstractFile) => {
+    if (node instanceof TFolder) {
+      if (EXCLUDED_DIRS.has(node.name)) return;
+      node.children.forEach(walk);
+      return;
+    }
+    if (node instanceof TFile) {
+      const relative = node.path.slice(folderPath.length).replace(/^\//, '');
+      if (shouldSkip(relative) === false) count++;
+    }
+  };
+  walk(folder);
+  return count;
+}

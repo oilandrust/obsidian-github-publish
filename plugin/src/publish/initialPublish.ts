@@ -1,0 +1,137 @@
+import { App, normalizePath } from 'obsidian';
+import { FileSystemAdapter } from 'obsidian';
+import { enableGitHubPages } from '../github/pages';
+import { createInitialCommit, ensureRepositoryReadyForGit } from '../github/git';
+import { resolveRepository } from '../github/repos';
+import { ProgressState, RepoFile, SetupConfig } from '../settings';
+import { loadToolchainFiles } from './bundleToolchain';
+import { scanVaultFolder } from './scanVault';
+import { log } from '../log';
+
+export interface PublishResult {
+  owner: string;
+  repo: string;
+  commitSha: string;
+  manifest: Record<string, string>;
+  liveUrl: string;
+}
+
+export async function runInitialPublish(
+  app: App,
+  pluginDir: string,
+  token: string,
+  username: string,
+  config: SetupConfig,
+  onProgress: (state: Partial<ProgressState>) => void,
+): Promise<PublishResult> {
+  log('Starting initial publish via Git API + GraphQL updateRef', {
+    contentFolder: config.contentFolder,
+    repo: config.repoName,
+  });
+  onProgress({ phase: 'preparing', message: 'Scanning vault folder…' });
+
+  const { files: contentFiles, warnings } = await scanVaultFolder(app.vault, config.contentFolder);
+  if (contentFiles.length === 0) {
+    throw new Error('No publishable files found in the selected folder.');
+  }
+
+  const toolchainFiles = loadToolchainFiles(pluginDir, config.siteName, config.repoName);
+  const allFiles: RepoFile[] = sortUploadFiles([...toolchainFiles, ...contentFiles]);
+  log(`Prepared ${contentFiles.length} content files and ${toolchainFiles.length} toolchain files`, {
+    fileCount: allFiles.length,
+  });
+
+  onProgress({
+    phase: 'creating-repo',
+    message: config.repoMode === 'create' ? 'Creating repository…' : 'Verifying repository…',
+  });
+
+  let owner = username;
+  let repoName = config.repoName;
+
+  const resolved = await resolveRepository(token, username, config.repoName, config.repoMode);
+  owner = resolved.owner;
+  repoName = resolved.repoName;
+  if (!resolved.created && config.repoMode === 'create') {
+    log(`Repository ${owner}/${repoName} already exists — continuing publish`);
+  }
+
+  onProgress({ phase: 'uploading', message: 'Preparing repository for Git upload…' });
+  await ensureRepositoryReadyForGit(token, owner, repoName, (message) => {
+    onProgress({ phase: 'uploading', message });
+  });
+
+  onProgress({ phase: 'configuring-pages', message: 'Configuring GitHub Pages…' });
+  await enableGitHubPages(token, owner, repoName);
+
+  onProgress({
+    phase: 'uploading',
+    message: 'Creating single Git commit…',
+    uploadCurrent: 0,
+    uploadTotal: allFiles.length,
+  });
+
+  const commitSha = await createInitialCommit(
+    token,
+    owner,
+    repoName,
+    allFiles,
+    'Initial publish from Obsidian',
+    (current, total) => {
+      onProgress({
+        phase: 'uploading',
+        message: `Creating Git commit (${current}/${total})…`,
+        uploadCurrent: current,
+        uploadTotal: total,
+      });
+    },
+  );
+
+  const manifest = buildManifest(allFiles.filter((f) => f.path.startsWith('content/')));
+
+  if (warnings.length > 0) {
+    console.warn('GitHub Publish warnings:', warnings);
+  }
+
+  return {
+    owner,
+    repo: repoName,
+    commitSha,
+    manifest,
+    liveUrl: `https://${owner}.github.io/${repoName}/`,
+  };
+}
+
+function sortUploadFiles(files: RepoFile[]): RepoFile[] {
+  return [...files].sort((a, b) => a.path.localeCompare(b.path));
+}
+
+function buildManifest(files: RepoFile[]): Record<string, string> {
+  const manifest: Record<string, string> = {};
+  for (const file of files) {
+    manifest[file.path] = hashBytes(file.content);
+  }
+  return manifest;
+}
+
+function hashBytes(bytes: Uint8Array): string {
+  let hash = 0;
+  for (const byte of bytes) {
+    hash = (hash * 31 + byte) >>> 0;
+  }
+  return `hash:${hash.toString(16)}`;
+}
+
+export function getPluginDir(app: App, pluginId: string): string {
+  const adapter = app.vault.adapter;
+  if (!(adapter instanceof FileSystemAdapter)) {
+    throw new Error('GitHub Publish requires the desktop app.');
+  }
+  return normalizePath(
+    pathJoin(adapter.getBasePath(), app.vault.configDir, 'plugins', pluginId),
+  );
+}
+
+function pathJoin(...parts: string[]): string {
+  return parts.join('/').replace(/\\/g, '/');
+}

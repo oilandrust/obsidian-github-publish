@@ -2,7 +2,7 @@
 
 Reference implementation: [oilandrust/catsnake-web](https://github.com/oilandrust/catsnake-web) → https://oilandrust.github.io/catsnake-web/
 
-This documents the exact steps validated in June 2026. The Obsidian plugin should automate all of these.
+This documents the exact steps validated in June 2026. The Obsidian plugin should automate all of these. See [Publish Architecture.md](Publish%20Architecture.md) for the plugin API and update strategy.
 
 ## Target repository layout
 
@@ -119,9 +119,9 @@ Body:
 }
 ```
 
-Required OAuth scopes: `repo` (or fine-grained equivalent with Pages write access).
+Required OAuth scopes: `repo` and `workflow` (or fine-grained equivalent with Contents + Workflows write and Pages write access).
 
-If Pages is not yet enabled, the first workflow run with `actions/configure-pages@v4` plus a successful `deploy-pages` job may also initialise Pages — but setting `build_type: workflow` explicitly is the reliable path.
+If Pages is not yet enabled, the first workflow run with `actions/configure-pages@v4` will fail — enable Pages with `build_type: workflow` **before** pushing the commit that contains `deploy.yml`.
 
 Reference: [GitHub REST API — Pages](https://docs.github.com/en/rest/pages/pages)
 
@@ -182,7 +182,7 @@ Mapped to [MVP.md](MVP.md) onboarding:
 |------|----------------------|---------------|
 | Choose folder to publish | Moved vault into `content/` by hand | Copy selected vault folder to `content/` in the target repo |
 | Choose site name | Hardcoded in `package.json` `--site-name` | Generate `package.json` with user's site name |
-| Authenticate with GitHub | Used existing `gh` / git credentials | OAuth app with `repo` scope |
+| Authenticate with GitHub | Used existing `gh` / git credentials | OAuth app with `repo` + `workflow` scopes |
 | Create or choose repository | Created `oilandrust/catsnake-web` | GitHub API: create repo or use existing |
 | Install toolchain | Copied scripts, template, workflow, gitignore | Commit all toolchain files via PR |
 | Enable GitHub Pages | Settings → Pages → enable | `PUT /repos/{owner}/{repo}/pages` with `build_type: workflow` |

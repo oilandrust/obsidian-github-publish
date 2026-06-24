@@ -1,0 +1,14 @@
+{
+  "name": "{{repo}}",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-site.mjs --content ./content --site-name \"{{siteName}}\" --base-path /{{repo}}/",
+    "dev": "node scripts/build-site.mjs --content ./content --site-name \"{{siteName}}\" --base-path / --skip-vite && npm run dev --prefix template",
+    "preview": "npm run preview --prefix template"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "marked": "^15.0.7"
+  }
+}

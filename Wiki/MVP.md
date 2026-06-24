@@ -6,7 +6,7 @@ The output should look like Obsidian or Obsidian publish
 On the left a browser with folders and notes, and other files like images that can be viewed in the main document view, skip the right panel, skip search for now
 ![[publish-example-dark.png]]
 # Tech
-Pluggin allow to publish changes: creates a PR + merge on a repository
+Pluggin allow to publish changes: commits to main via GitHub API (see [Publish Architecture.md](Publish%20Architecture.md)), triggers GitHub Actions
 Repository contains copy of the published notes + scripts + web template
 Script on push/merge: Notes X Template -> build static website, github actions make visible
 Static website/template: React based, maybe using next.js, can start as a single page with embeded json to populate
@@ -35,9 +35,14 @@ build pluggin with onboarding step and check that it's all doable
 - Unique users
 - Publish actions
 - Live / Active sites
-
 # Steps:
-- Build a simple template and build script, test it on catsnake-web 
+- [x] Build a simple template and build script, test it on catsnake-web 
+- [x] Publish it on github IO, gather data
+- [x] Define / Refine push / branch / update process → [Publish Architecture.md](Publish%20Architecture.md)
+- [ ] Build the pluggin prototype and test the whole pipeline
+- [ ] Implement Analytics
+- [ ] Polish
+- [ ] Ship
 
 Out of Scope:
 # Premium
