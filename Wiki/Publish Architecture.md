@@ -124,7 +124,8 @@ Maps to MVP onboarding steps 1–6.
 
 5. **Build initial file set** locally in memory:
    - `content/**` — copy from selected vault folder (preserve paths, include linked assets)
-   - `scripts/`, `template/`, `.github/workflows/deploy.yml`, `package.json`, `package-lock.json`, `template/package-lock.json`, `.gitignore` — bundled inside the plugin
+   - **Quartz:** `quartz.config.yaml`, `quartz.lock.json`, `.github-publish/site.json`, workflow
+   - **Built-in:** `scripts/`, `template/`, `package.json`, lockfiles, workflow — bundled inside the plugin
 
    Generate `package.json` scripts with correct `--site-name` and `--base-path /{repo}/`.
 
@@ -323,17 +324,50 @@ Ship inside the plugin package (not read from the user’s vault):
 ```
 plugin/
   assets/
-    toolchain/
+    toolchain-inhouse/   # built-in Vite/React template
       scripts/
-      template/          # source only, no node_modules
+      template/
       .github/workflows/deploy.yml
       package.json.template
-      package-lock.json
-      template/package-lock.json
+      ...
+    toolchain-quartz/    # Quartz bootstrap only (no engine source)
+      quartz.config.yaml
+      quartz.lock.json
+      .github/workflows/deploy.yml
+      .github-publish/site.json.template
       .gitignore
 ```
 
-At onboarding, interpolate `package.json.template` with `{siteName}`, `{repoName}`, `{basePath}`.
+`npm run sync:toolchain` refreshes both bundles from the dev repo (`scripts/sync-toolchain.mjs` + `scripts/sync-quartz-toolchain.mjs`).
+
+## Template engines
+
+The plugin supports two publish engines. Default is **Quartz**; **Built-in** is available under Advanced settings.
+
+| Engine | User repo layout | CI build |
+|--------|------------------|----------|
+| **Quartz** (default) | `content/`, `quartz.config.yaml`, `quartz.lock.json`, workflow | Clone pinned Quartz commit, overlay user files, `npx quartz build` → `public/` |
+| **Built-in** | `content/`, `scripts/`, `template/`, `package.json`, workflow | `npm ci` + `npm run build` → `dist/` |
+
+### Quartz thin-repo model
+
+We do **not** vendor the Quartz engine into the user repo or the plugin. On first publish the plugin pushes only:
+
+- `content/**` — vault notes
+- `quartz.config.yaml` — obsidian template with `pageTitle` and `baseUrl`
+- `quartz.lock.json` — pinned community plugin commits
+- `.github/workflows/deploy.yml` — clones `jackyzha0/quartz` at a pinned SHA
+- `.github-publish/site.json` — records engine + SHA for support
+
+Incremental publish still only updates `content/**`.
+
+Quartz v5 has no npm package or semver release tags. Pin the engine by **commit SHA** on branch `v5`. The plugin ships `DEFAULT_QUARTZ_COMMIT` in `plugin/src/quartz/versions.ts`; advanced settings allow a custom SHA.
+
+### Built-in engine
+
+The original custom Vite/React template. Existing published sites using `scripts/` + `template/` continue to work unchanged.
+
+At onboarding, interpolate templates with `{siteName}`, `{repoName}`, `{owner}`, `{baseUrl}`, `{quartzCommitSha}` as applicable.
 
 ## File selection rules (content/)
 

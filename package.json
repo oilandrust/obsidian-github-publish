@@ -7,8 +7,9 @@
     "build": "node scripts/build-site.mjs",
     "dev": "node scripts/build-site.mjs --content /Users/olivier/Projects/catsnake-web --site-name \"Cat Snake\" --skip-vite && npm run dev --prefix template",
     "preview": "npm run preview --prefix template",
-    "sync:toolchain": "node scripts/sync-toolchain.mjs",
-    "build:plugin": "npm run sync:toolchain && npm run build --prefix plugin"
+    "sync:toolchain": "node scripts/sync-toolchain.mjs && node scripts/sync-quartz-toolchain.mjs",
+    "build:plugin": "npm run sync:toolchain && npm run build --prefix plugin",
+    "build:plugin:advanced": "npm run sync:toolchain && npm run build:advanced --prefix plugin"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",

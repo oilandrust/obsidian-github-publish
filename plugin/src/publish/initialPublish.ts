@@ -4,8 +4,9 @@ import { enableGitHubPages } from '../github/pages';
 import { createInitialCommit, ensureRepositoryReadyForGit } from '../github/git';
 import { resolveRepository } from '../github/repos';
 import { ProgressState, RepoFile, SetupConfig } from '../settings';
-import { loadToolchainFiles } from './bundleToolchain';
+import { loadPublishToolchainFiles, publishBundleContextFromConfig } from './bundleToolchain';
 import { buildContentManifest } from './diffVault';
+import { ensureQuartzHomePage } from './ensureQuartzHomePage';
 import { scanVaultFolder } from './scanVault';
 import { log } from '../log';
 
@@ -28,19 +29,18 @@ export async function runInitialPublish(
   log('Starting initial publish via Git API + GraphQL updateRef', {
     contentFolder: config.contentFolder,
     repo: config.repoName,
+    templateEngine: config.templateEngine ?? 'quartz',
   });
   onProgress({ phase: 'preparing', message: 'Scanning vault folder…' });
 
-  const { files: contentFiles, warnings } = await scanVaultFolder(app.vault, config.contentFolder);
+  let { files: contentFiles, warnings } = await scanVaultFolder(app.vault, config.contentFolder);
   if (contentFiles.length === 0) {
     throw new Error('No publishable files found in the selected folder.');
   }
 
-  const toolchainFiles = loadToolchainFiles(pluginDir, config.siteName, config.repoName);
-  const allFiles: RepoFile[] = sortUploadFiles([...toolchainFiles, ...contentFiles]);
-  log(`Prepared ${contentFiles.length} content files and ${toolchainFiles.length} toolchain files`, {
-    fileCount: allFiles.length,
-  });
+  if ((config.templateEngine ?? 'quartz') === 'quartz') {
+    contentFiles = ensureQuartzHomePage(contentFiles, config.siteName);
+  }
 
   onProgress({
     phase: 'creating-repo',
@@ -56,6 +56,15 @@ export async function runInitialPublish(
   if (!resolved.created && config.repoMode === 'create') {
     log(`Repository ${owner}/${repoName} already exists — continuing publish`);
   }
+
+  const bundleContext = publishBundleContextFromConfig(config, owner);
+  const toolchainFiles = loadPublishToolchainFiles(pluginDir, bundleContext);
+  const allFiles: RepoFile[] = sortUploadFiles([...toolchainFiles, ...contentFiles]);
+  log(`Prepared ${contentFiles.length} content files and ${toolchainFiles.length} toolchain files`, {
+    fileCount: allFiles.length,
+    templateEngine: bundleContext.templateEngine,
+    quartzCommitSha: bundleContext.quartzCommitSha,
+  });
 
   onProgress({ phase: 'uploading', message: 'Preparing repository for Git upload…' });
   await ensureRepositoryReadyForGit(token, owner, repoName, (message) => {

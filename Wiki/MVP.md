@@ -38,10 +38,29 @@ portfolio-psy/
 - [x] Publish it on github IO, gather data
 - [x] Define / Refine push / branch / update process → [Publish Architecture.md](Publish%20Architecture.md)
 - [x] Build the pluggin prototype and test the whole pipeline
-	- [ ] Implement Notes update, page status tracking
+	- [x] Implement Notes update, page status tracking
 - [ ] Implement Analytics
 - [ ] Polish
+	- [x] Use Quartz template instead of homemade
+	- [ ] Status UI
+	- [ ] Don't allow to resent publish changes if update is pending
+	- [ ] Content is push, site is building
+	- [ ] Chose files to exclude?
+- [ ] Marketing Strategy
 - [ ] Ship
+
+# Polish List
+
+**Warning** <br>Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: [https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/)|
+
+**Publish Wizard page**
+Clickable link, paste url option
+
+**Remove/Hide advanced settings**
+
+**Keep Github App secret in source or config**
+
+**Site status on setting page UX**
 
 Out of Scope:
 # Premium

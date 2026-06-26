@@ -1,7 +1,14 @@
 import { Notice } from 'obsidian';
 import GitHubPublishPlugin from '../../main';
 import { log } from '../log';
-import { isSitePublished, SetupConfig } from '../settings';
+import { PublishedSite, SetupConfig } from '../settings';
+import { resolveQuartzCommitSha } from '../quartz/versions';
+import {
+  isPublishedSite,
+  publishedSiteFromPublishResult,
+  updatePublishedSite,
+  upsertPublishedSite,
+} from '../sites';
 import { countDiffChanges } from './diffVault';
 import { runInitialPublish } from './initialPublish';
 import { detectUnpublishedChanges, runPublishChanges } from './publishChanges';
@@ -9,8 +16,6 @@ import { ProgressModal } from '../ui/ProgressModal';
 
 export function saveSetupConfig(plugin: GitHubPublishPlugin, config: SetupConfig): void {
   plugin.settings.savedSetup = config;
-  plugin.settings.siteName = config.siteName;
-  plugin.settings.contentFolder = config.contentFolder;
   void plugin.saveSettings();
 }
 
@@ -27,7 +32,7 @@ export function startPublish(plugin: GitHubPublishPlugin, config?: SetupConfig):
     return;
   }
 
-  const publishConfig = config ?? plugin.settings.savedSetup;
+  const publishConfig = withTemplateSettings(config ?? plugin.settings.savedSetup, plugin);
   if (!publishConfig) {
     new Notice('No saved publish setup. Run the setup wizard first.');
     return;
@@ -42,12 +47,15 @@ export function startPublish(plugin: GitHubPublishPlugin, config?: SetupConfig):
     (onProgress) =>
       runInitialPublish(plugin.app, pluginDir, token, username, publishConfig, onProgress),
     async (result) => {
-      plugin.settings.owner = result.owner;
-      plugin.settings.repo = result.repo;
-      plugin.settings.siteName = publishConfig.siteName;
-      plugin.settings.contentFolder = publishConfig.contentFolder;
-      plugin.settings.lastPublishedCommitSha = result.commitSha;
-      plugin.settings.manifest = result.manifest;
+      const site = publishedSiteFromPublishResult(
+        publishConfig,
+        result.owner,
+        result.repo,
+        result.commitSha,
+        result.manifest,
+      );
+      plugin.settings.publishedSites = upsertPublishedSite(plugin.settings.publishedSites, site);
+      plugin.settings.savedSetup = null;
       await plugin.saveSettings();
       new Notice(`Site published: ${result.liveUrl}`);
     },
@@ -57,8 +65,8 @@ export function startPublish(plugin: GitHubPublishPlugin, config?: SetupConfig):
   progress.open();
 }
 
-export function startPublishChanges(plugin: GitHubPublishPlugin): void {
-  log('Publish changes requested');
+export function startPublishChanges(plugin: GitHubPublishPlugin, site: PublishedSite): void {
+  log('Publish changes requested', { siteId: site.id });
   const token = plugin.settings.accessToken;
 
   if (!token) {
@@ -66,7 +74,7 @@ export function startPublishChanges(plugin: GitHubPublishPlugin): void {
     return;
   }
 
-  if (!isSitePublished(plugin.settings)) {
+  if (!isPublishedSite(site)) {
     new Notice('Complete initial publish before publishing changes.');
     return;
   }
@@ -74,10 +82,16 @@ export function startPublishChanges(plugin: GitHubPublishPlugin): void {
   const progress = new ProgressModal(
     plugin.app,
     token,
-    (onProgress) => runPublishChanges(plugin.app, token, plugin.settings, onProgress),
+    (onProgress) => runPublishChanges(plugin.app, token, site, onProgress),
     async (result) => {
-      plugin.settings.lastPublishedCommitSha = result.commitSha;
-      plugin.settings.manifest = result.manifest;
+      plugin.settings.publishedSites = updatePublishedSite(
+        plugin.settings.publishedSites,
+        site.id,
+        {
+          lastPublishedCommitSha: result.commitSha,
+          manifest: result.manifest,
+        },
+      );
       await plugin.saveSettings();
       new Notice(`Changes published: ${result.liveUrl}`);
     },
@@ -87,12 +101,35 @@ export function startPublishChanges(plugin: GitHubPublishPlugin): void {
   progress.open();
 }
 
-export async function hasUnpublishedChanges(plugin: GitHubPublishPlugin): Promise<boolean> {
-  if (!isSitePublished(plugin.settings) || !plugin.settings.contentFolder) {
+export async function hasUnpublishedChanges(
+  plugin: GitHubPublishPlugin,
+  site: PublishedSite,
+): Promise<boolean> {
+  if (!isPublishedSite(site) || !site.contentFolder) {
     return false;
   }
 
-  const result = await detectUnpublishedChanges(plugin.app, plugin.settings);
+  const result = await detectUnpublishedChanges(plugin.app, site);
   if (!result) return false;
   return countDiffChanges(result.diff) > 0;
+}
+
+export function getPublishableSites(plugin: GitHubPublishPlugin): PublishedSite[] {
+  return plugin.settings.publishedSites.filter(isPublishedSite);
+}
+
+function withTemplateSettings(
+  config: SetupConfig | null,
+  plugin: GitHubPublishPlugin,
+): SetupConfig | null {
+  if (!config) return null;
+
+  return {
+    ...config,
+    templateEngine: config.templateEngine ?? plugin.settings.templateEngine ?? 'quartz',
+    quartzCommitSha:
+      config.quartzCommitSha ??
+      plugin.settings.quartzCommitSha ??
+      resolveQuartzCommitSha(null),
+  };
 }

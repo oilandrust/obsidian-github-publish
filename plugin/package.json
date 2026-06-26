@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "build": "node esbuild.config.mjs production",
-    "dev": "node esbuild.config.mjs"
+    "build:advanced": "PLUGIN_SHOW_ADVANCED_SETTINGS=true node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs",
+    "dev:advanced": "PLUGIN_SHOW_ADVANCED_SETTINGS=true node esbuild.config.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

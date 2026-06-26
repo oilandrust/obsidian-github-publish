@@ -1,0 +1,7 @@
+{
+  "templateEngine": "quartz",
+  "quartzCommitSha": "{{quartzCommitSha}}",
+  "siteName": "{{siteName}}",
+  "owner": "{{owner}}",
+  "repo": "{{repo}}"
+}

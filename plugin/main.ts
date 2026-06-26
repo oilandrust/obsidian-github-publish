@@ -1,19 +1,27 @@
-import { App, ButtonComponent, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { fetchGitHubUser } from './src/github/auth';
 import { connectGitHub } from './src/github/connect';
-import { checkPublishStatus, StatusCheck } from './src/github/publishStatus';
 import {
   DEFAULT_SETTINGS,
-  getPublishedLiveUrl,
-  getPublishedRepoUrl,
-  isSitePublished,
   PluginSettings,
+  TemplateEngine,
 } from './src/settings';
+import { migratePluginSettings } from './src/sites';
 import { SetupModal } from './src/ui/SetupModal';
+import { PublishedSiteCard } from './src/ui/PublishedSiteCard';
+import { SitePickerModal } from './src/ui/SitePickerModal';
 import { getPluginDir } from './src/publish/initialPublish';
-import { detectUnpublishedChanges } from './src/publish/publishChanges';
-import { startPublish, startPublishChanges } from './src/publish/startPublish';
-import { countDiffChanges } from './src/publish/diffVault';
+import {
+  getPublishableSites,
+  startPublish,
+  startPublishChanges,
+} from './src/publish/startPublish';
+import {
+  DEFAULT_QUARTZ_COMMIT,
+  resolveQuartzCommitSha,
+  TESTED_QUARTZ_VERSIONS,
+} from './src/quartz/versions';
+import { showAdvancedSettings } from './src/buildFlags';
 
 export default class GitHubPublishPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
@@ -37,7 +45,7 @@ export default class GitHubPublishPlugin extends Plugin {
     this.addCommand({
       id: 'publish-changes',
       name: 'Publish changes',
-      callback: () => startPublishChanges(this),
+      callback: () => this.openPublishChangesPicker(),
     });
 
     this.addRibbonIcon('globe', 'GitHub Publish setup', () => {
@@ -46,7 +54,8 @@ export default class GitHubPublishPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
+    const raw = await this.loadData();
+    this.settings = migratePluginSettings({ ...DEFAULT_SETTINGS, ...raw });
   }
 
   async saveSettings(): Promise<void> {
@@ -64,6 +73,24 @@ export default class GitHubPublishPlugin extends Plugin {
     await this.saveSettings();
     return user;
   }
+
+  openPublishChangesPicker(): void {
+    const sites = getPublishableSites(this);
+    if (sites.length === 0) {
+      new Notice('Complete initial publish before publishing changes.');
+      return;
+    }
+
+    if (sites.length === 1) {
+      const site = sites[0];
+      if (site) startPublishChanges(this, site);
+      return;
+    }
+
+    new SitePickerModal(this.app, sites, (site) => {
+      startPublishChanges(this, site);
+    }).open();
+  }
 }
 
 class GitHubPublishSettingTab extends PluginSettingTab {
@@ -78,26 +105,15 @@ class GitHubPublishSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     this.statusCheckId++;
+    const checkId = this.statusCheckId;
+    const isStale = () => checkId !== this.statusCheckId;
     containerEl.empty();
 
     containerEl.createEl('h2', { text: 'GitHub Publish' });
 
     containerEl.createEl('p', {
-      text: 'Create a GitHub OAuth App at github.com/settings/developers with no callback URL required for device flow. Enter its Client ID below. Login requests repo and workflow scopes (workflow is required to push commits that include .github/workflows/).',
+      text: 'Connect your GitHub account to publish notes to GitHub Pages. Authorization uses repo and workflow scopes (workflow is required to push commits that include .github/workflows/).',
     });
-
-    new Setting(containerEl)
-      .setName('OAuth App Client ID')
-      .setDesc('Required for GitHub device login.')
-      .addText((text) =>
-        text
-          .setPlaceholder('Ov23li…')
-          .setValue(this.plugin.settings.clientId)
-          .onChange(async (value) => {
-            this.plugin.settings.clientId = value.trim();
-            await this.plugin.saveSettings();
-          }),
-      );
 
     const connected = Boolean(this.plugin.settings.accessToken);
     new Setting(containerEl)
@@ -154,8 +170,23 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       }
     }
 
-    if (isSitePublished(this.plugin.settings)) {
-      this.renderPublishedSite(containerEl);
+    if (showAdvancedSettings) {
+      this.renderAdvancedSettings(containerEl);
+    }
+
+    const { publishedSites } = this.plugin.settings;
+    if (publishedSites.length > 0) {
+      containerEl.createEl('h3', { text: 'Published sites' });
+      const sitesContainer = containerEl.createDiv({ cls: 'github-publish-sites-list' });
+      for (const site of publishedSites) {
+        new PublishedSiteCard(
+          this.app,
+          this.plugin,
+          site,
+          isStale,
+          (selected) => startPublishChanges(this.plugin, selected),
+        ).render(sitesContainer);
+      }
     } else {
       const saved = this.plugin.settings.savedSetup;
       if (saved) {
@@ -170,119 +201,63 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     );
   }
 
-  private renderPublishedSite(containerEl: HTMLElement): void {
-    const { settings } = this.plugin;
-    const liveUrl = getPublishedLiveUrl(settings);
-    const repoUrl = getPublishedRepoUrl(settings);
-    const checkId = this.statusCheckId;
+  private renderAdvancedSettings(containerEl: HTMLElement): void {
+    containerEl.createEl('h3', { text: 'Advanced' });
 
-    containerEl.createEl('h3', { text: 'Published site' });
-    const summary = containerEl.createEl('dl', { cls: 'github-publish-summary' });
-    this.addSummaryRow(summary, 'Site name', settings.siteName ?? '—');
-    this.addSummaryRow(summary, 'Vault folder', settings.contentFolder ?? '—');
-
-    summary.createEl('dt', { text: 'Repository' });
-    const repoValue = summary.createEl('dd');
-    const repoStatus = repoValue.createSpan({ cls: 'github-publish-status github-publish-status-checking' });
-    repoStatus.setText('Checking…');
-    if (repoUrl) {
-      repoValue.createEl('br');
-      const link = repoValue.createEl('a', {
-        cls: 'github-publish-live-link',
-        href: repoUrl,
-        text: repoUrl,
+    new Setting(containerEl)
+      .setName('Template engine')
+      .setDesc('Quartz is recommended for Obsidian features like wikilinks, graph, and backlinks.')
+      .addDropdown((dropdown) => {
+        dropdown
+          .addOption('quartz', 'Quartz')
+          .addOption('inhouse', 'Built-in')
+          .setValue(this.plugin.settings.templateEngine ?? 'quartz')
+          .onChange(async (value) => {
+            this.plugin.settings.templateEngine = value as TemplateEngine;
+            await this.plugin.saveSettings();
+            this.display();
+          });
       });
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+
+    if ((this.plugin.settings.templateEngine ?? 'quartz') === 'quartz') {
+      const activeSha = resolveQuartzCommitSha(this.plugin.settings.quartzCommitSha);
+      const isKnownSha = TESTED_QUARTZ_VERSIONS.some((version) => version.sha === activeSha);
+      const dropdownValue = isKnownSha ? activeSha : 'custom';
+
+      new Setting(containerEl)
+        .setName('Quartz version')
+        .setDesc('Pinned Quartz commit used when publishing a new site.')
+        .addDropdown((dropdown) => {
+          for (const version of TESTED_QUARTZ_VERSIONS) {
+            dropdown.addOption(version.sha, version.label);
+          }
+          dropdown.addOption('custom', 'Custom commit…');
+          dropdown.setValue(dropdownValue).onChange(async (value) => {
+            if (value === 'custom') {
+              this.plugin.settings.quartzCommitSha = isKnownSha ? '' : activeSha;
+            } else {
+              this.plugin.settings.quartzCommitSha = value;
+            }
+            await this.plugin.saveSettings();
+            this.display();
+          });
+        });
+
+      if (dropdownValue === 'custom') {
+        new Setting(containerEl)
+          .setName('Custom Quartz commit SHA')
+          .setDesc(`Leave blank to use the plugin default (${DEFAULT_QUARTZ_COMMIT.slice(0, 7)}).`)
+          .addText((text) => {
+            text
+              .setPlaceholder(DEFAULT_QUARTZ_COMMIT)
+              .setValue(this.plugin.settings.quartzCommitSha ?? '')
+              .onChange(async (value) => {
+                this.plugin.settings.quartzCommitSha = value.trim() || null;
+                await this.plugin.saveSettings();
+              });
+          });
+      }
     }
-
-    summary.createEl('dt', { text: 'Live site' });
-    const liveValue = summary.createEl('dd');
-    const liveStatus = liveValue.createSpan({ cls: 'github-publish-status github-publish-status-checking' });
-    liveStatus.setText('Checking…');
-    if (liveUrl) {
-      liveValue.createEl('br');
-      const link = liveValue.createEl('a', {
-        cls: 'github-publish-live-link',
-        href: liveUrl,
-        text: liveUrl,
-      });
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-    }
-
-    summary.createEl('dt', { text: 'Changes' });
-    const changesValue = summary.createEl('dd');
-    const changesStatus = changesValue.createSpan({
-      cls: 'github-publish-status github-publish-status-checking',
-    });
-    changesStatus.setText('Checking for changes…');
-
-    let publishChangesBtn: ButtonComponent | null = null;
-    const publishChangesSetting = new Setting(containerEl).addButton((btn) => {
-      publishChangesBtn = btn;
-      btn.setButtonText('Publish changes').setCta();
-      btn.setDisabled(true);
-      btn.onClick(() => {
-        if (!this.plugin.settings.accessToken) {
-          new Notice('Connect to GitHub in settings first.');
-          return;
-        }
-        startPublishChanges(this.plugin);
-      });
-    });
-
-    if (liveUrl && settings.owner && settings.repo) {
-      void checkPublishStatus(settings.accessToken, settings.owner, settings.repo, liveUrl).then(
-        (result) => {
-          if (checkId !== this.statusCheckId) return;
-          this.applyStatusCheck(repoStatus, result.repository);
-          this.applyStatusCheck(liveStatus, result.liveSite);
-        },
-      );
-    }
-
-    if (settings.contentFolder) {
-      void detectUnpublishedChanges(this.plugin.app, settings).then((result) => {
-        if (checkId !== this.statusCheckId) return;
-        if (!result) {
-          changesStatus.removeClass('github-publish-status-checking');
-          changesStatus.addClass('github-publish-status-error');
-          changesStatus.setText('Unable to check for changes');
-          return;
-        }
-
-        const hasChanges = countDiffChanges(result.diff) > 0;
-        changesStatus.removeClass(
-          'github-publish-status-checking',
-          'github-publish-status-live',
-          'github-publish-status-unreachable',
-        );
-        changesStatus.addClass(
-          hasChanges ? 'github-publish-changes-pending' : 'github-publish-status-live',
-        );
-        changesStatus.setText(result.summary);
-
-        publishChangesBtn?.setDisabled(!hasChanges);
-        publishChangesSetting.setDesc(
-          hasChanges ? 'Unpublished changes detected in your vault folder.' : '',
-        );
-      });
-    }
-  }
-
-  private applyStatusCheck(element: HTMLElement, check: StatusCheck): void {
-    element.removeClass('github-publish-status-checking', 'github-publish-status-live', 'github-publish-status-unreachable', 'github-publish-status-error');
-    element.addClass(`github-publish-status-${check.status}`);
-    const statusLabel =
-      check.status === 'live'
-        ? 'Live'
-        : check.status === 'unreachable'
-          ? 'Unreachable'
-          : check.status === 'error'
-            ? 'Error'
-            : 'Checking…';
-    element.setText(`${statusLabel} — ${check.detail}`);
   }
 
   private renderSavedSetup(containerEl: HTMLElement, saved: NonNullable<PluginSettings['savedSetup']>): void {

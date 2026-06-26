@@ -1,41 +1,33 @@
+export type TemplateEngine = 'quartz' | 'inhouse';
+
+export interface PublishedSite {
+  id: string;
+  owner: string;
+  repo: string;
+  siteName: string;
+  contentFolder: string;
+  lastPublishedCommitSha: string;
+  manifest: Record<string, string>;
+  templateEngine: TemplateEngine;
+  quartzCommitSha: string | null;
+}
+
 export interface PluginSettings {
-  clientId: string;
   accessToken: string | null;
   githubUsername: string | null;
-  owner: string | null;
-  repo: string | null;
-  siteName: string | null;
-  contentFolder: string | null;
-  lastPublishedCommitSha: string | null;
-  manifest: Record<string, string>;
+  publishedSites: PublishedSite[];
   savedSetup: SetupConfig | null;
-}
-
-export function isSitePublished(settings: PluginSettings): boolean {
-  return Boolean(settings.owner && settings.repo && settings.lastPublishedCommitSha);
-}
-
-export function getPublishedLiveUrl(settings: PluginSettings): string | null {
-  if (!settings.owner || !settings.repo) return null;
-  return `https://${settings.owner}.github.io/${settings.repo}/`;
-}
-
-export function getPublishedRepoUrl(settings: PluginSettings): string | null {
-  if (!settings.owner || !settings.repo) return null;
-  return `https://github.com/${settings.owner}/${settings.repo}`;
+  templateEngine: TemplateEngine;
+  quartzCommitSha: string | null;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
-  clientId: '',
   accessToken: null,
   githubUsername: null,
-  owner: null,
-  repo: null,
-  siteName: null,
-  contentFolder: null,
-  lastPublishedCommitSha: null,
-  manifest: {},
+  publishedSites: [],
   savedSetup: null,
+  templateEngine: 'quartz',
+  quartzCommitSha: null,
 };
 
 export interface SetupConfig {
@@ -43,6 +35,8 @@ export interface SetupConfig {
   contentFolder: string;
   repoMode: 'create' | 'existing';
   repoName: string;
+  templateEngine?: TemplateEngine;
+  quartzCommitSha?: string | null;
 }
 
 export interface RepoFile {

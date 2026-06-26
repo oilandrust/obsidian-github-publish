@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'plugin', 'assets', 'toolchain');
+const OUT = path.join(ROOT, 'plugin', 'assets', 'toolchain-inhouse');
 
 const COPY_DIRS = [
   { from: 'scripts', to: 'scripts' },

@@ -7,6 +7,7 @@
   "scripts/lib/parse-markdown.mjs",
   "scripts/lib/resolve-asset.mjs",
   "scripts/lib/scan-content.mjs",
+  "scripts/sync-quartz-toolchain.mjs",
   "scripts/sync-toolchain.mjs",
   "template/index.html",
   "template/package-lock.json",

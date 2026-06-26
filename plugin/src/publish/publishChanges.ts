@@ -1,6 +1,6 @@
 import { App } from 'obsidian';
 import { createContentUpdateCommit } from '../github/git';
-import { PluginSettings, ProgressState } from '../settings';
+import { PublishedSite, ProgressState } from '../settings';
 import {
   countDiffChanges,
   diffAgainstManifest,
@@ -14,12 +14,10 @@ import { log } from '../log';
 export async function runPublishChanges(
   app: App,
   token: string,
-  settings: PluginSettings,
+  site: PublishedSite,
   onProgress: (state: Partial<ProgressState>) => void,
 ): Promise<PublishResult> {
-  const owner = settings.owner;
-  const repo = settings.repo;
-  const contentFolder = settings.contentFolder;
+  const { owner, repo, contentFolder } = site;
 
   if (!owner || !repo || !contentFolder) {
     throw new Error('Published site configuration is incomplete.');
@@ -29,7 +27,7 @@ export async function runPublishChanges(
 
   onProgress({ phase: 'preparing', message: 'Scanning vault for changes…' });
   const { files: contentFiles, warnings } = await scanVaultFolder(app.vault, contentFolder);
-  const diff = diffAgainstManifest(settings.manifest, contentFiles);
+  const diff = diffAgainstManifest(site.manifest, contentFiles);
 
   if (countDiffChanges(diff) === 0) {
     throw new Error('No unpublished changes found.');
@@ -72,7 +70,7 @@ export async function runPublishChanges(
     },
   );
 
-  const manifest = mergeManifestAfterPublish(settings.manifest, diff);
+  const manifest = mergeManifestAfterPublish(site.manifest, diff);
 
   if (warnings.length > 0) {
     console.warn('GitHub Publish warnings:', warnings);
@@ -89,11 +87,11 @@ export async function runPublishChanges(
 
 export async function detectUnpublishedChanges(
   app: App,
-  settings: PluginSettings,
+  site: PublishedSite,
 ): Promise<{ diff: ReturnType<typeof diffAgainstManifest>; summary: string } | null> {
-  if (!settings.contentFolder) return null;
+  if (!site.contentFolder) return null;
 
-  const { files } = await scanVaultFolder(app.vault, settings.contentFolder);
-  const diff = diffAgainstManifest(settings.manifest, files);
+  const { files } = await scanVaultFolder(app.vault, site.contentFolder);
+  const diff = diffAgainstManifest(site.manifest, files);
   return { diff, summary: formatDiffSummary(diff) };
 }

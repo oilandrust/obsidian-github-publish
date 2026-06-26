@@ -1,59 +1,175 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { RepoFile } from '../settings';
+import { resolveQuartzCommitSha } from '../quartz/versions';
+import { RepoFile, SetupConfig, TemplateEngine } from '../settings';
 
 interface ToolchainManifest {
   files?: string[];
 }
 
-export function loadToolchainFiles(pluginDir: string, siteName: string, repoName: string): RepoFile[] {
-  const toolchainDir = path.join(pluginDir, 'assets', 'toolchain');
-  const manifestPath = path.join(toolchainDir, 'manifest.json');
+export interface PublishBundleContext {
+  templateEngine: TemplateEngine;
+  siteName: string;
+  repoName: string;
+  owner: string;
+  quartzCommitSha?: string | null;
+}
 
+const TEXT_EXTENSIONS = new Set([
+  '.md',
+  '.mjs',
+  '.ts',
+  '.tsx',
+  '.json',
+  '.yml',
+  '.yaml',
+  '.html',
+  '.css',
+  '.gitignore',
+]);
+
+function isTextFile(relativePath: string): boolean {
+  if (relativePath.endsWith('.template')) {
+    return true;
+  }
+  const ext = path.extname(relativePath);
+  return TEXT_EXTENSIONS.has(ext);
+}
+
+function toolchainDirName(engine: TemplateEngine): string {
+  return engine === 'quartz' ? 'toolchain-quartz' : 'toolchain-inhouse';
+}
+
+function loadManifestFiles(toolchainDir: string): string[] {
+  const manifestPath = path.join(toolchainDir, 'manifest.json');
   if (!fs.existsSync(manifestPath)) {
     throw new Error(
-      'Toolchain not found. Run npm run sync:toolchain in the obsidian-github-publish repo.',
+      `Toolchain not found at ${toolchainDir}. Run npm run sync:toolchain in the obsidian-github-publish repo.`,
     );
   }
 
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as ToolchainManifest | string[];
-  const filePaths = Array.isArray(manifest) ? manifest : manifest.files ?? [];
+  return Array.isArray(manifest) ? manifest : manifest.files ?? [];
+}
+
+function readRepoFile(toolchainDir: string, relativePath: string): RepoFile {
+  const absolute = path.join(toolchainDir, relativePath);
+  const content = fs.readFileSync(absolute);
+  return {
+    path: relativePath,
+    content,
+    encoding: isTextFile(relativePath) ? 'utf-8' : 'base64',
+  };
+}
+
+function applyTemplate(content: string, context: PublishBundleContext): string {
+  const quartzCommitSha = resolveQuartzCommitSha(context.quartzCommitSha);
+  const baseUrl = `${context.owner}.github.io/${context.repoName}`;
+
+  return content
+    .replaceAll('{{siteName}}', context.siteName)
+    .replaceAll('{{repo}}', context.repoName)
+    .replaceAll('{{owner}}', context.owner)
+    .replaceAll('{{pageTitle}}', context.siteName)
+    .replaceAll('{{baseUrl}}', baseUrl)
+    .replaceAll('{{quartzCommitSha}}', quartzCommitSha);
+}
+
+function pushTemplatedFile(
+  files: RepoFile[],
+  relativePath: string,
+  rawContent: string,
+  context: PublishBundleContext,
+): void {
+  const outputPath = relativePath.endsWith('.template')
+    ? relativePath.slice(0, -'.template'.length)
+    : relativePath;
+
+  files.push({
+    path: outputPath,
+    content: new TextEncoder().encode(applyTemplate(rawContent, context)),
+    encoding: 'utf-8',
+  });
+}
+
+function loadInhouseToolchain(toolchainDir: string, context: PublishBundleContext): RepoFile[] {
+  const filePaths = loadManifestFiles(toolchainDir);
   const files: RepoFile[] = [];
 
   for (const relativePath of filePaths) {
     if (relativePath === 'package.json.template') continue;
-
-    const absolute = path.join(toolchainDir, relativePath);
-    const content = fs.readFileSync(absolute);
-    const isText =
-      relativePath.endsWith('.md') ||
-      relativePath.endsWith('.mjs') ||
-      relativePath.endsWith('.ts') ||
-      relativePath.endsWith('.tsx') ||
-      relativePath.endsWith('.json') ||
-      relativePath.endsWith('.yml') ||
-      relativePath.endsWith('.yaml') ||
-      relativePath.endsWith('.html') ||
-      relativePath.endsWith('.css') ||
-      relativePath.endsWith('.gitignore');
-
-    files.push({
-      path: relativePath,
-      content,
-      encoding: isText ? 'utf-8' : 'base64',
-    });
+    files.push(readRepoFile(toolchainDir, relativePath));
   }
 
   const packageTemplate = fs.readFileSync(path.join(toolchainDir, 'package.json.template'), 'utf8');
-  const packageJson = packageTemplate
-    .replaceAll('{{siteName}}', siteName)
-    .replaceAll('{{repo}}', repoName);
+  pushTemplatedFile(files, 'package.json', packageTemplate, context);
+  return files;
+}
 
-  files.push({
-    path: 'package.json',
-    content: new TextEncoder().encode(packageJson),
-    encoding: 'utf-8',
-  });
+function loadQuartzToolchain(toolchainDir: string, context: PublishBundleContext): RepoFile[] {
+  const filePaths = loadManifestFiles(toolchainDir);
+  const files: RepoFile[] = [];
+
+  for (const relativePath of filePaths) {
+    if (relativePath.endsWith('.template')) {
+      const raw = fs.readFileSync(path.join(toolchainDir, relativePath), 'utf8');
+      pushTemplatedFile(files, relativePath, raw, context);
+      continue;
+    }
+
+    const file = readRepoFile(toolchainDir, relativePath);
+    if (file.encoding === 'utf-8') {
+      const templated = applyTemplate(new TextDecoder().decode(file.content), context);
+      files.push({
+        path: file.path,
+        content: new TextEncoder().encode(templated),
+        encoding: 'utf-8',
+      });
+    } else {
+      files.push(file);
+    }
+  }
 
   return files;
+}
+
+export function loadPublishToolchainFiles(
+  pluginDir: string,
+  context: PublishBundleContext,
+): RepoFile[] {
+  const engine = context.templateEngine;
+  const toolchainDir = path.join(pluginDir, 'assets', toolchainDirName(engine));
+
+  if (engine === 'quartz') {
+    return loadQuartzToolchain(toolchainDir, context);
+  }
+
+  return loadInhouseToolchain(toolchainDir, context);
+}
+
+/** @deprecated Use loadPublishToolchainFiles */
+export function loadToolchainFiles(
+  pluginDir: string,
+  siteName: string,
+  repoName: string,
+): RepoFile[] {
+  return loadPublishToolchainFiles(pluginDir, {
+    templateEngine: 'inhouse',
+    siteName,
+    repoName,
+    owner: repoName,
+  });
+}
+
+export function publishBundleContextFromConfig(
+  config: SetupConfig,
+  owner: string,
+): PublishBundleContext {
+  return {
+    templateEngine: config.templateEngine ?? 'quartz',
+    siteName: config.siteName,
+    repoName: config.repoName,
+    owner,
+    quartzCommitSha: config.quartzCommitSha,
+  };
 }

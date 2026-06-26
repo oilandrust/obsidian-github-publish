@@ -4,10 +4,14 @@ import fs from 'fs';
 import path from 'path';
 
 const prod = process.argv[2] === 'production';
+const showAdvancedSettings = process.env.PLUGIN_SHOW_ADVANCED_SETTINGS === 'true';
 
 const context = await esbuild.context({
   entryPoints: ['main.ts'],
   bundle: true,
+  define: {
+    __SHOW_ADVANCED_SETTINGS__: String(showAdvancedSettings),
+  },
   external: [
     'obsidian',
     'electron',

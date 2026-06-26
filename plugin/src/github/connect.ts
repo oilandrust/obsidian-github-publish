@@ -2,6 +2,7 @@ import { Notice } from 'obsidian';
 import GitHubPublishPlugin from '../../main';
 import { GitHubUser } from './client';
 import { pollAccessToken, requestDeviceCode } from './auth';
+import { GITHUB_OAUTH_CLIENT_ID } from './oauthConfig';
 
 export async function connectGitHub(
   plugin: GitHubPublishPlugin,
@@ -10,19 +11,19 @@ export async function connectGitHub(
     onPending?: () => void;
   },
 ): Promise<GitHubUser> {
-  const clientId = plugin.settings.clientId;
-  if (!clientId) {
-    throw new Error('Enter your OAuth App Client ID in settings first.');
-  }
-
-  const device = await requestDeviceCode(clientId);
+  const device = await requestDeviceCode(GITHUB_OAUTH_CLIENT_ID);
   callbacks?.onUserCode?.(device.user_code, device.verification_uri);
   window.open(device.verification_uri, '_blank');
 
-  const token = await pollAccessToken(clientId, device.device_code, device.interval, () => {
-    callbacks?.onPending?.();
-    new Notice('Waiting for GitHub authorization…');
-  });
+  const token = await pollAccessToken(
+    GITHUB_OAUTH_CLIENT_ID,
+    device.device_code,
+    device.interval,
+    () => {
+      callbacks?.onPending?.();
+      new Notice('Waiting for GitHub authorization…');
+    },
+  );
 
   return plugin.setAccessToken(token);
 }

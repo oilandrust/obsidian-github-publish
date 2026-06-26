@@ -29,8 +29,8 @@ export class SetupModal extends Modal {
 
   onOpen(): void {
     const saved = this.plugin.settings.savedSetup;
-    this.siteName = saved?.siteName ?? this.plugin.settings.siteName ?? '';
-    this.contentFolder = saved?.contentFolder ?? this.plugin.settings.contentFolder ?? '';
+    this.siteName = saved?.siteName ?? '';
+    this.contentFolder = saved?.contentFolder ?? '';
     this.repoMode = saved?.repoMode ?? 'create';
     this.repoName = saved?.repoName ?? '';
     this.render();
@@ -111,14 +111,6 @@ export class SetupModal extends Modal {
   }
 
   private renderAuthStep(container: HTMLElement): void {
-    if (!this.plugin.settings.clientId) {
-      container.createEl('p', {
-        cls: 'github-publish-step-error',
-        text: 'Set your GitHub OAuth App Client ID in Settings → GitHub Publish first.',
-      });
-      return;
-    }
-
     if (this.plugin.settings.accessToken && this.plugin.settings.githubUsername) {
       container.createEl('p', {
         text: `Connected as ${this.plugin.settings.githubUsername}`,
@@ -324,8 +316,6 @@ export class SetupModal extends Modal {
   }
 
   private async startDeviceFlow(): Promise<void> {
-    if (!this.plugin.settings.clientId) return;
-
     try {
       this.deviceCodeVisible = true;
       this.render();
