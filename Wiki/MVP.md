@@ -62,6 +62,8 @@ Clickable link, paste url option
 
 **Site status on setting page UX**
 
+**Remove disconnect github stage in setup wizard**
+
 Out of Scope:
 # Premium
 Choose from a few built-in templates

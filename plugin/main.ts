@@ -111,11 +111,14 @@ class GitHubPublishSettingTab extends PluginSettingTab {
 
     containerEl.createEl('h2', { text: 'GitHub Publish' });
 
-    containerEl.createEl('p', {
-      text: 'Connect your GitHub account to publish notes to GitHub Pages. Authorization uses repo and workflow scopes (workflow is required to push commits that include .github/workflows/).',
-    });
-
     const connected = Boolean(this.plugin.settings.accessToken);
+
+    if (!connected) {
+      containerEl.createEl('p', {
+        text: 'Connect your GitHub account to start publishing your vault or a specific folder. Authorization uses repo and workflow scopes.',
+      });
+    }
+
     new Setting(containerEl)
       .setName('GitHub account')
       .setDesc(this.plugin.settings.githubUsername ?? 'Not connected')
@@ -174,6 +177,21 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       this.renderAdvancedSettings(containerEl);
     }
 
+    new Setting(containerEl)
+      .setName('Publish new site')
+      .setDesc('Choose a vault folder and GitHub repository to publish.')
+      .addButton((btn) => {
+        btn.setButtonText('Start Setup');
+        if (connected) {
+          btn.setCta();
+        } else {
+          btn.setDisabled(true);
+        }
+        btn.onClick(() => {
+          new SetupModal(this.app, this.plugin).open();
+        });
+      });
+
     const { publishedSites } = this.plugin.settings;
     if (publishedSites.length > 0) {
       containerEl.createEl('h3', { text: 'Published sites' });
@@ -193,12 +211,6 @@ class GitHubPublishSettingTab extends PluginSettingTab {
         this.renderSavedSetup(containerEl, saved);
       }
     }
-
-    new Setting(containerEl).addButton((btn) =>
-      btn.setButtonText('Open setup wizard').onClick(() => {
-        new SetupModal(this.app, this.plugin).open();
-      }),
-    );
   }
 
   private renderAdvancedSettings(containerEl: HTMLElement): void {
