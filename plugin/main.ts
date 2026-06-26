@@ -25,10 +25,13 @@ import { showAdvancedSettings } from './src/buildFlags';
 
 export default class GitHubPublishPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
+  private publishingSiteIds = new Set<string>();
+  private settingTab: GitHubPublishSettingTab | null = null;
 
   async onload(): Promise<void> {
     await this.loadSettings();
-    this.addSettingTab(new GitHubPublishSettingTab(this.app, this));
+    this.settingTab = new GitHubPublishSettingTab(this.app, this);
+    this.addSettingTab(this.settingTab);
 
     this.addCommand({
       id: 'setup-site',
@@ -72,6 +75,24 @@ export default class GitHubPublishPlugin extends Plugin {
     this.settings.githubUsername = user.login;
     await this.saveSettings();
     return user;
+  }
+
+  markSitePublishing(siteId: string): void {
+    this.publishingSiteIds.add(siteId);
+    this.refreshSettingsTab();
+  }
+
+  clearSitePublishing(siteId: string): void {
+    this.publishingSiteIds.delete(siteId);
+    this.refreshSettingsTab();
+  }
+
+  isSitePublishing(siteId: string): boolean {
+    return this.publishingSiteIds.has(siteId);
+  }
+
+  refreshSettingsTab(): void {
+    this.settingTab?.display();
   }
 
   openPublishChangesPicker(): void {

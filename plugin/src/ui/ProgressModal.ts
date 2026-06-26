@@ -5,6 +5,11 @@ import { ProgressPhase, ProgressState } from '../settings';
 
 export type ProgressModalMode = 'full' | 'incremental';
 
+export interface ProgressModalOptions {
+  mode?: ProgressModalMode;
+  onFinished?: () => void;
+}
+
 export class ProgressModal extends Modal {
   private state: ProgressState = {
     phase: 'preparing',
@@ -20,7 +25,7 @@ export class ProgressModal extends Modal {
       onProgress: (state: Partial<ProgressState>) => void,
     ) => Promise<PublishResult>,
     private readonly onComplete: (result: PublishResult) => Promise<void>,
-    private readonly options?: { mode?: ProgressModalMode },
+    private readonly options?: ProgressModalOptions,
   ) {
     super(app);
   }
@@ -103,6 +108,8 @@ export class ProgressModal extends Modal {
           `GitHub Publish failed: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
+    } finally {
+      this.options?.onFinished?.();
     }
   }
 

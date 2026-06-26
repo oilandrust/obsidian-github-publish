@@ -3,7 +3,7 @@ import { checkPublishStatus, StatusCheck } from '../github/publishStatus';
 import { detectUnpublishedChanges } from '../publish/publishChanges';
 import { countDiffChanges } from '../publish/diffVault';
 import { PublishedSite } from '../settings';
-import { getSiteLiveUrl, getSiteRepoUrl } from '../sites';
+import { getSiteLiveUrl, getSiteRepoUrl, siteId } from '../sites';
 import {
   getQuartzVersionLabel,
   resolveQuartzCommitSha,
@@ -44,29 +44,27 @@ export class PublishedSiteCard {
     }
 
     summary.createEl('dt', { text: 'Repository' });
-    const repoValue = summary.createEl('dd');
+    const repoValue = summary.createEl('dd', { cls: 'github-publish-summary-inline' });
     const repoStatus = repoValue.createSpan({
       cls: 'github-publish-status github-publish-status-checking',
     });
     repoStatus.setText('Checking…');
-    repoValue.createEl('br');
     const repoLink = repoValue.createEl('a', {
-      cls: 'github-publish-live-link',
+      cls: 'github-publish-summary-link',
       href: repoUrl,
-      text: repoUrl,
+      text: siteId(this.site.owner, this.site.repo),
     });
     repoLink.target = '_blank';
     repoLink.rel = 'noopener noreferrer';
 
     summary.createEl('dt', { text: 'Live site' });
-    const liveValue = summary.createEl('dd');
+    const liveValue = summary.createEl('dd', { cls: 'github-publish-summary-inline' });
     const liveStatus = liveValue.createSpan({
       cls: 'github-publish-status github-publish-status-checking',
     });
     liveStatus.setText('Checking…');
-    liveValue.createEl('br');
     const liveLink = liveValue.createEl('a', {
-      cls: 'github-publish-live-link',
+      cls: 'github-publish-summary-link',
       href: liveUrl,
       text: liveUrl,
     });
@@ -78,20 +76,28 @@ export class PublishedSiteCard {
     const changesStatus = changesValue.createSpan({
       cls: 'github-publish-status github-publish-status-checking',
     });
-    changesStatus.setText('Checking for changes…');
 
-    const publishBtn = changesValue.createEl('button', {
-      cls: 'mod-cta github-publish-changes-button',
-      text: 'Publish changes',
-    });
-    publishBtn.disabled = true;
-    publishBtn.addEventListener('click', () => {
-      if (!token) {
-        new Notice('Connect to GitHub in settings first.');
-        return;
-      }
-      this.onPublishChanges(this.site);
-    });
+    const isPublishing = this.plugin.isSitePublishing(this.site.id);
+    let publishBtn: HTMLButtonElement | null = null;
+
+    if (isPublishing) {
+      changesStatus.setText('Publishing in progress');
+    } else {
+      changesStatus.setText('Checking for changes…');
+
+      publishBtn = changesValue.createEl('button', {
+        cls: 'mod-cta github-publish-changes-button',
+        text: 'Publish changes',
+      });
+      publishBtn.disabled = true;
+      publishBtn.addEventListener('click', () => {
+        if (!token) {
+          new Notice('Connect to GitHub in settings first.');
+          return;
+        }
+        this.onPublishChanges(this.site);
+      });
+    }
 
     if (token) {
       void checkPublishStatus(token, this.site.owner, this.site.repo, liveUrl).then((result) => {
@@ -104,8 +110,13 @@ export class PublishedSiteCard {
       liveStatus.setText('Connect GitHub to check status');
     }
 
+    if (isPublishing) {
+      return;
+    }
+
     void detectUnpublishedChanges(this.app, this.site).then((result) => {
       if (this.isStale()) return;
+      if (!publishBtn) return;
       if (!result) {
         changesStatus.removeClass('github-publish-status-checking');
         changesStatus.addClass('github-publish-status-error');
@@ -143,7 +154,7 @@ export class PublishedSiteCard {
           : check.status === 'error'
             ? 'Error'
             : 'Checking…';
-    element.setText(`${statusLabel} — ${check.detail}`);
+    element.setText(statusLabel);
   }
 
   private addSummaryRow(dl: HTMLElement, label: string, value: string): void {

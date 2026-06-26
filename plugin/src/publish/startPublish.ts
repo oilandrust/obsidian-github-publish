@@ -6,6 +6,7 @@ import { resolveQuartzCommitSha } from '../quartz/versions';
 import {
   isPublishedSite,
   publishedSiteFromPublishResult,
+  siteId,
   updatePublishedSite,
   upsertPublishedSite,
 } from '../sites';
@@ -40,6 +41,14 @@ export function startPublish(plugin: GitHubPublishPlugin, config?: SetupConfig):
 
   saveSetupConfig(plugin, publishConfig);
 
+  const publishingId = siteId(username, publishConfig.repoName);
+  if (plugin.isSitePublishing(publishingId)) {
+    new Notice('Publish already in progress for this site.');
+    return;
+  }
+
+  plugin.markSitePublishing(publishingId);
+
   const pluginDir = plugin.getPluginDir();
   const progress = new ProgressModal(
     plugin.app,
@@ -59,7 +68,10 @@ export function startPublish(plugin: GitHubPublishPlugin, config?: SetupConfig):
       await plugin.saveSettings();
       new Notice(`Site published: ${result.liveUrl}`);
     },
-    { mode: 'full' },
+    {
+      mode: 'full',
+      onFinished: () => plugin.clearSitePublishing(publishingId),
+    },
   );
 
   progress.open();
@@ -79,6 +91,13 @@ export function startPublishChanges(plugin: GitHubPublishPlugin, site: Published
     return;
   }
 
+  if (plugin.isSitePublishing(site.id)) {
+    new Notice('Publish already in progress for this site.');
+    return;
+  }
+
+  plugin.markSitePublishing(site.id);
+
   const progress = new ProgressModal(
     plugin.app,
     token,
@@ -95,7 +114,10 @@ export function startPublishChanges(plugin: GitHubPublishPlugin, site: Published
       await plugin.saveSettings();
       new Notice(`Changes published: ${result.liveUrl}`);
     },
-    { mode: 'incremental' },
+    {
+      mode: 'incremental',
+      onFinished: () => plugin.clearSitePublishing(site.id),
+    },
   );
 
   progress.open();

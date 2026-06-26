@@ -56,13 +56,11 @@ portfolio-psy/
 **Publish Wizard page**
 Clickable link, paste url option
 
-**Remove/Hide advanced settings**
-
-**Keep Github App secret in source or config**
-
 **Site status on setting page UX**
 
 **Remove disconnect github stage in setup wizard**
+
+**Include link to github action page in the status and upload wizard**
 
 Out of Scope:
 # Premium
@@ -71,6 +69,7 @@ Custom CSS
 Page customization by coding agent
 Login from portfolio page, automatic via github login, only for the user
 Subscription on my website
+Set site icon
 
 
 
