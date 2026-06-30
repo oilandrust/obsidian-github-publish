@@ -189,6 +189,33 @@
   word-break: break-all;
 }
 
+.github-publish-live-url-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  min-width: 0;
+}
+
+.github-publish-live-url-row .github-publish-live-link {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.github-publish-copy-url {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  color: var(--text-muted);
+}
+
+.github-publish-copy-url:hover {
+  color: var(--text-normal);
+}
+
 .github-publish-live-url,
 .github-publish-live-link {
   font-size: 1.1rem;

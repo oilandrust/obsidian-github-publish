@@ -10,6 +10,7 @@ import { migratePluginSettings } from './src/sites';
 import { SetupModal } from './src/ui/SetupModal';
 import { PublishedSiteCard } from './src/ui/PublishedSiteCard';
 import { SitePickerModal } from './src/ui/SitePickerModal';
+import { ProgressModal } from './src/ui/ProgressModal';
 import { getPluginDir } from './src/publish/initialPublish';
 import {
   getPublishableSites,
@@ -36,7 +37,7 @@ export default class GitHubPublishPlugin extends Plugin {
     this.addCommand({
       id: 'setup-site',
       name: 'Set up site',
-      callback: () => new SetupModal(this.app, this).open(),
+      callback: () => this.openSetupWizard(),
     });
 
     this.addCommand({
@@ -52,7 +53,7 @@ export default class GitHubPublishPlugin extends Plugin {
     });
 
     this.addRibbonIcon('globe', 'GitHub Publish setup', () => {
-      new SetupModal(this.app, this).open();
+      this.openSetupWizard();
     });
   }
 
@@ -93,6 +94,14 @@ export default class GitHubPublishPlugin extends Plugin {
 
   refreshSettingsTab(): void {
     this.settingTab?.display();
+  }
+
+  openSetupWizard(): void {
+    if (!this.settings.accessToken) {
+      new Notice('Connect to GitHub in plugin settings first.');
+      return;
+    }
+    new SetupModal(this.app, this).open();
   }
 
   openPublishChangesPicker(): void {
@@ -198,6 +207,8 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       this.renderAdvancedSettings(containerEl);
     }
 
+    this.renderDevelopmentSettings(containerEl);
+
     new Setting(containerEl)
       .setName('Publish new site')
       .setDesc('Choose a vault folder and GitHub repository to publish.')
@@ -209,7 +220,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
           btn.setDisabled(true);
         }
         btn.onClick(() => {
-          new SetupModal(this.app, this.plugin).open();
+          this.plugin.openSetupWizard();
         });
       });
 
@@ -291,6 +302,22 @@ class GitHubPublishSettingTab extends PluginSettingTab {
           });
       }
     }
+  }
+
+  private renderDevelopmentSettings(containerEl: HTMLElement): void {
+    containerEl.createEl('h3', { text: 'Development' });
+
+    new Setting(containerEl)
+      .setName('Preview publish success')
+      .setDesc('Open the success screen with mock data for githubpublish-wiki.')
+      .addButton((btn) =>
+        btn.setButtonText('Preview').onClick(() => {
+          ProgressModal.openDonePreview(this.app, {
+            mode: 'incremental',
+            liveUrl: 'https://oilandrust.github.io/githubpublish-wiki/',
+          });
+        }),
+      );
   }
 
   private renderSavedSetup(containerEl: HTMLElement, saved: NonNullable<PluginSettings['savedSetup']>): void {

@@ -1,0 +1,44 @@
+name: Release Obsidian plugin
+
+on:
+  push:
+    tags:
+      - '[0-9]*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package.json
+            plugin/package-lock.json
+
+      - name: Build plugin
+        run: npm run build:plugin
+
+      - name: Package plugin archive
+        run: |
+          cd plugin
+          zip -r ../plugin-dist.zip manifest.json main.js styles.css assets
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          gh release create "$tag" \
+            --title="$tag" \
+            --notes="See [README](https://github.com/oilandrust/obsidian-github-publish#install) for install instructions." \
+            plugin/main.js \
+            plugin/manifest.json \
+            plugin/styles.css \
+            plugin-dist.zip

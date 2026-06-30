@@ -8,6 +8,8 @@ export type ProgressModalMode = 'full' | 'incremental';
 export interface ProgressModalOptions {
   mode?: ProgressModalMode;
   onFinished?: () => void;
+  /** Render a fixed state without running publish (development preview). */
+  previewState?: ProgressState;
 }
 
 export class ProgressModal extends Modal {
@@ -34,8 +36,39 @@ export class ProgressModal extends Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass('github-publish-modal');
+
+    if (this.options?.previewState) {
+      this.state = { ...this.options.previewState };
+      this.lastActivePhase = this.state.phase === 'error' ? 'preparing' : this.state.phase;
+      this.render();
+      return;
+    }
+
     this.render();
     void this.run();
+  }
+
+  /** Open the success screen with mock data for UI development. */
+  static openDonePreview(
+    app: App,
+    options: { mode?: ProgressModalMode; liveUrl: string; message?: string },
+  ): void {
+    new ProgressModal(
+      app,
+      '',
+      async () => {
+        throw new Error('ProgressModal preview does not run publish.');
+      },
+      async () => {},
+      {
+        mode: options.mode,
+        previewState: {
+          phase: 'done',
+          message: options.message ?? 'Your site is live!',
+          liveUrl: options.liveUrl,
+        },
+      },
+    ).open();
   }
 
   private async run(): Promise<void> {
@@ -188,7 +221,7 @@ export class ProgressModal extends Modal {
     }
 
     if (this.state.phase === 'done' && this.state.liveUrl) {
-      contentEl.createEl('p', { cls: 'github-publish-live-url', text: this.state.liveUrl });
+      this.renderLiveUrlRow(contentEl, this.state.liveUrl);
       new Setting(contentEl)
         .addButton((btn) =>
           btn.setButtonText('Open site').setCta().onClick(() => window.open(this.state.liveUrl)),
@@ -215,5 +248,29 @@ export class ProgressModal extends Modal {
         this.close();
       }),
     );
+  }
+
+  private renderLiveUrlRow(container: HTMLElement, liveUrl: string): void {
+    const row = container.createDiv({ cls: 'github-publish-live-url-row' });
+    const link = row.createEl('a', {
+      cls: 'github-publish-live-link',
+      href: liveUrl,
+      text: liveUrl,
+    });
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+
+    const copyBtn = row.createEl('button', {
+      cls: 'clickable-icon github-publish-copy-url',
+    });
+    copyBtn.setAttr('aria-label', 'Copy site URL');
+    copyBtn.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+    copyBtn.addEventListener('click', () => {
+      void navigator.clipboard.writeText(liveUrl).then(
+        () => new Notice('Site URL copied to clipboard'),
+        () => new Notice('Could not copy URL'),
+      );
+    });
   }
 }

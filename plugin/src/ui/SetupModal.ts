@@ -1,5 +1,4 @@
 import { App, Modal, Notice, Setting, TFolder } from 'obsidian';
-import { connectGitHub } from '../github/connect';
 import { listUserRepos } from '../github/repos';
 import GitHubPublishPlugin from '../../main';
 import { SetupConfig } from '../settings';
@@ -7,7 +6,7 @@ import { countFilesInFolder } from '../publish/scanVault';
 import { saveSetupConfig, startPublish } from '../publish/startPublish';
 import { FolderTree } from './FolderTree';
 
-type WizardStep = 1 | 2 | 3 | 4 | 5;
+type WizardStep = 1 | 2 | 3 | 4;
 
 export class SetupModal extends Modal {
   private step: WizardStep = 1;
@@ -15,8 +14,6 @@ export class SetupModal extends Modal {
   private contentFolder = '';
   private repoMode: 'create' | 'existing' = 'create';
   private repoName = '';
-  private deviceCodeVisible = false;
-  private userCode = '';
   private isPublishing = false;
   private expandedFolders = new Set<string>();
 
@@ -28,6 +25,12 @@ export class SetupModal extends Modal {
   }
 
   onOpen(): void {
+    if (!this.plugin.settings.accessToken) {
+      new Notice('Connect to GitHub in plugin settings first.');
+      this.close();
+      return;
+    }
+
     const saved = this.plugin.settings.savedSetup;
     this.siteName = saved?.siteName ?? '';
     this.contentFolder = saved?.contentFolder ?? '';
@@ -41,7 +44,7 @@ export class SetupModal extends Modal {
     contentEl.empty();
     contentEl.addClass('github-publish-modal');
 
-    contentEl.createEl('h2', { text: `GitHub Publish — Setup (step ${this.step}/5)` });
+    contentEl.createEl('h2', { text: `GitHub Publish — Setup (step ${this.step}/4)` });
 
     switch (this.step) {
       case 1:
@@ -51,12 +54,9 @@ export class SetupModal extends Modal {
         this.renderFolderStep(contentEl);
         break;
       case 3:
-        this.renderAuthStep(contentEl);
-        break;
-      case 4:
         this.renderRepoStep(contentEl);
         break;
-      case 5:
+      case 4:
         this.renderConfirmStep(contentEl);
         break;
     }
@@ -108,44 +108,6 @@ export class SetupModal extends Modal {
         this.render();
       },
     }).render();
-  }
-
-  private renderAuthStep(container: HTMLElement): void {
-    if (this.plugin.settings.accessToken && this.plugin.settings.githubUsername) {
-      container.createEl('p', {
-        text: `Connected as ${this.plugin.settings.githubUsername}`,
-      });
-      new Setting(container).addButton((btn) =>
-        btn.setButtonText('Disconnect').onClick(async () => {
-          this.plugin.settings.accessToken = null;
-          this.plugin.settings.githubUsername = null;
-          await this.plugin.saveSettings();
-          this.render();
-        }),
-      );
-      return;
-    }
-
-    container.createEl('p', {
-      text: 'Connect your GitHub account using the device authorization flow (scopes: repo, workflow).',
-    });
-
-    if (this.deviceCodeVisible) {
-      if (this.userCode) {
-        container.createEl('p', { text: 'Enter this code on GitHub:' });
-        container.createEl('div', { cls: 'github-publish-device-code', text: this.userCode });
-        container.createEl('p', { text: 'Waiting for authorization…' });
-      } else {
-        container.createEl('p', { text: 'Requesting device code…' });
-      }
-    }
-
-    new Setting(container).addButton((btn) => {
-      btn.setButtonText(this.deviceCodeVisible ? 'Restart login' : 'Connect to GitHub');
-      btn.setCta();
-      btn.setDisabled(this.deviceCodeVisible && !this.userCode);
-      btn.onClick(() => void this.startDeviceFlow());
-    });
   }
 
   private renderRepoStep(container: HTMLElement): void {
@@ -249,17 +211,17 @@ export class SetupModal extends Modal {
     }
 
     const nextBtn = nav.createEl('button', {
-      text: this.step === 5 ? 'Publish' : 'Next',
+      text: this.step === 4 ? 'Publish' : 'Next',
       cls: 'mod-cta',
     });
 
-    if (this.step === 5) {
+    if (this.step === 4) {
       nextBtn.disabled = this.isPublishing;
     }
 
     nextBtn.addEventListener('click', () => {
       if (!this.validateStep()) return;
-      if (this.step === 5) {
+      if (this.step === 4) {
         void this.publish();
         return;
       }
@@ -293,12 +255,6 @@ export class SetupModal extends Modal {
         return true;
       }
       case 3:
-        if (!this.plugin.settings.accessToken) {
-          new Notice('Connect to GitHub first.');
-          return false;
-        }
-        return true;
-      case 4:
         if (!this.repoName.trim()) {
           new Notice('Enter or select a repository name.');
           return false;
@@ -308,34 +264,10 @@ export class SetupModal extends Modal {
           return false;
         }
         return true;
-      case 5:
+      case 4:
         return true;
       default:
         return true;
-    }
-  }
-
-  private async startDeviceFlow(): Promise<void> {
-    try {
-      this.deviceCodeVisible = true;
-      this.render();
-      const user = await connectGitHub(this.plugin, {
-        onUserCode: (code) => {
-          this.userCode = code;
-          this.render();
-        },
-        onPending: () => {
-          this.render();
-        },
-      });
-      new Notice(`Connected as ${user.login}`);
-      this.deviceCodeVisible = false;
-      this.userCode = '';
-      this.render();
-    } catch (error) {
-      new Notice(error instanceof Error ? error.message : String(error));
-      this.deviceCodeVisible = false;
-      this.render();
     }
   }
 
