@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "useUnknownInCatchVariables": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "noEmit": true
+  },
+  "include": [
+    "plugin/**/*.ts",
+    "plugin/assets/toolchain-inhouse/template/src/**/*.tsx",
+    "template/src/**/*.tsx"
+  ],
+  "exclude": ["**/node_modules", "plugin/assets/toolchain-quartz/**"]
+}

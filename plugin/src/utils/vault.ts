@@ -1,7 +1,11 @@
 import { TAbstractFile, TFile, TFolder, Vault } from 'obsidian';
 
+function asArrayBuffer(value: unknown): ArrayBuffer {
+  return value as ArrayBuffer;
+}
+
 export function getVaultFolder(vault: Vault, folderPath: string): TFolder {
-  const folder = vault.getAbstractFileByPath(folderPath);
+  const folder: unknown = vault.getAbstractFileByPath(folderPath);
   if (!(folder instanceof TFolder)) {
     throw new Error(`Folder not found: ${folderPath}`);
   }
@@ -21,6 +25,6 @@ export function asFile(file: TAbstractFile): TFile | null {
 }
 
 export async function readVaultBinary(vault: Vault, file: TFile): Promise<Uint8Array> {
-  const arrayBuffer = (await vault.readBinary(file)) as ArrayBuffer;
+  const arrayBuffer = asArrayBuffer(await vault.readBinary(file));
   return new Uint8Array(arrayBuffer);
 }

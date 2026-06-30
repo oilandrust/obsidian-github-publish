@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ContentView } from './components/ContentView';
 import { Layout } from './components/Layout';
 import { findFirstNavigableNode, findNodeById, type SiteData } from './types';
 
+function viewIdFromPath(pathname: string): string | undefined {
+  const match = /\/view\/([^/?#]+)/.exec(pathname);
+  return match?.[1];
+}
+
 function Viewer({ siteData }: { siteData: SiteData }) {
-  const routeId: string | undefined = useParams().id;
-  const id = typeof routeId === 'string' ? routeId : undefined;
+  const pathname: string = useLocation().pathname;
+  const id = viewIdFromPath(pathname);
   const node = id ? findNodeById(siteData.tree, id) : null;
 
   if (!node || (node.type !== 'note' && node.type !== 'asset')) {
@@ -24,24 +29,28 @@ function Viewer({ siteData }: { siteData: SiteData }) {
   return <ContentView node={node} />;
 }
 
+async function loadSiteData(baseUrl: string): Promise<SiteData> {
+  const res = await fetch(`${baseUrl}data/site-data.json`);
+  if (!res.ok) {
+    throw new Error(`Failed to load site data (${String(res.status)})`);
+  }
+  const json: unknown = await res.json();
+  return json as SiteData;
+}
+
 export default function App() {
   const [siteData, setSiteData] = useState<SiteData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch(`${import.meta.env.BASE_URL}data/site-data.json`);
-        if (!res.ok) {
-          throw new Error(`Failed to load site data (${String(res.status)})`);
-        }
-        const data = (await res.json()) as SiteData;
+    void loadSiteData(import.meta.env.BASE_URL)
+      .then((data) => {
         document.title = data.siteName;
         setSiteData(data);
-      } catch (err: unknown) {
+      })
+      .catch((err: unknown) => {
         setLoadError(err instanceof Error ? err.message : String(err));
-      }
-    })();
+      });
   }, []);
 
   if (loadError) {

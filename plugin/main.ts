@@ -24,6 +24,7 @@ import {
 } from './src/quartz/versions';
 import { showAdvancedSettings } from './src/buildFlags';
 import { childDiv, childEl } from './src/ui/dom';
+import { loadPluginSettingsData } from './src/utils/pluginData';
 
 export default class GitHubPublishPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
@@ -59,9 +60,7 @@ export default class GitHubPublishPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const raw: unknown = await this.loadData();
-    const stored =
-      raw !== null && typeof raw === 'object' ? (raw as Partial<PluginSettings>) : {};
+    const stored = await loadPluginSettingsData(this);
     this.settings = migratePluginSettings({ ...DEFAULT_SETTINGS, ...stored });
   }
 
@@ -145,7 +144,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     const connected = Boolean(this.plugin.settings.accessToken);
 
     if (!connected) {
-      containerEl.createEl('p', {
+      childEl(containerEl, 'p', {
         text: 'Connect your GitHub account to start publishing your vault or a specific folder. Authorization uses repo and workflow scopes.',
       });
     }
@@ -193,14 +192,14 @@ class GitHubPublishSettingTab extends PluginSettingTab {
 
     if (this.connecting) {
       if (this.deviceUserCode) {
-        containerEl.createEl('p', { text: 'Enter this code on GitHub:' });
-        containerEl.createEl('div', {
+        childEl(containerEl, 'p', { text: 'Enter this code on GitHub:' });
+        childEl(containerEl, 'div', {
           cls: 'github-publish-device-code',
           text: this.deviceUserCode,
         });
-        containerEl.createEl('p', { text: 'Waiting for authorization…' });
+        childEl(containerEl, 'p', { text: 'Waiting for authorization…' });
       } else {
-        containerEl.createEl('p', { text: 'Requesting device code…' });
+        childEl(containerEl, 'p', { text: 'Requesting device code…' });
       }
     }
 

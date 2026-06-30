@@ -1,12 +1,38 @@
-import type { CSSProperties, ReactNode } from 'react';
+declare module 'react' {
+  export type ReactNode =
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | ReactElement
+    | ReactNode[];
 
-declare module 'react-router-dom' {
-  export interface Params {
-    [key: string]: string | undefined;
+  export interface ReactElement {
+    type: unknown;
+    props: unknown;
+    key: string | null;
   }
 
-  export function useParams(): Params;
-  export function useLocation(): { pathname: string };
+  export type SetStateAction<S> = S | ((prevState: S) => S);
+  export type Dispatch<A> = (value: A) => void;
+  export type CSSProperties = Record<string, string | number | undefined>;
+
+  export function useState<S>(initialState: S | (() => S)): [S, Dispatch<SetStateAction<S>>];
+  export function useEffect(
+    effect: () => void | (() => void),
+    deps?: ReadonlyArray<unknown>,
+  ): void;
+}
+
+declare module 'react-router-dom' {
+  import type { CSSProperties, ReactNode } from 'react';
+
+  export interface Location {
+    pathname: string;
+  }
+
+  export function useLocation(): Location;
   export function Navigate(props: { to: string; replace?: boolean }): ReactNode;
   export function Route(props: {
     path?: string;

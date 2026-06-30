@@ -2,13 +2,19 @@ import type { DomElementInfo } from 'obsidian';
 
 type DomOpts = DomElementInfo | string;
 
+function asElement<T extends HTMLElement>(value: unknown): T {
+  return value as T;
+}
+
 /** Typed wrapper — contains Obsidian DOM helper inference for community ESLint scans. */
 export function childDiv(host: HTMLElement, opts?: DomOpts): HTMLDivElement {
-  return host.createDiv(opts) as HTMLDivElement;
+  const el: unknown = host.createDiv(opts);
+  return asElement<HTMLDivElement>(el);
 }
 
 export function childSpan(host: HTMLElement, opts?: DomOpts): HTMLSpanElement {
-  return host.createSpan(opts) as HTMLSpanElement;
+  const el: unknown = host.createSpan(opts);
+  return asElement<HTMLSpanElement>(el);
 }
 
 export function childEl<K extends keyof HTMLElementTagNameMap>(
@@ -16,5 +22,6 @@ export function childEl<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   opts?: DomOpts,
 ): HTMLElementTagNameMap[K] {
-  return host.createEl(tag, opts) as HTMLElementTagNameMap[K];
+  const el: unknown = host.createEl(tag, opts);
+  return asElement<HTMLElementTagNameMap[K]>(el);
 }

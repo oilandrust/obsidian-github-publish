@@ -1,3 +1,4 @@
 export function parseJson<T>(text: string): T {
-  return JSON.parse(text) as T;
+  const parsed: unknown = JSON.parse(text);
+  return parsed as T;
 }

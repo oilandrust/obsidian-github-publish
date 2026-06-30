@@ -178,7 +178,7 @@ export class ProgressModal extends Modal {
       this.options?.mode === 'incremental'
         ? 'Publishing changes to GitHub Pages'
         : 'Publishing to GitHub Pages';
-    contentEl.createEl('h2', { text: title });
+    childEl(contentEl, 'h2', { text: title });
 
     const steps = childDiv(contentEl, { cls: 'github-publish-steps' });
     const phases = this.getPhases();
@@ -213,13 +213,13 @@ export class ProgressModal extends Modal {
       childSpan(row, { text: label });
     }
 
-    contentEl.createEl('p', { text: this.state.message });
+    childEl(contentEl, 'p', { text: this.state.message });
 
     if (this.state.uploadTotal) {
       const progressLabel =
         this.options?.mode === 'incremental' ? 'Processed' : 'Prepared';
-      contentEl.createEl('p', {
-        text: `${progressLabel} ${this.state.uploadCurrent ?? 0} / ${this.state.uploadTotal} files`,
+      childEl(contentEl, 'p', {
+        text: `${progressLabel} ${String(this.state.uploadCurrent ?? 0)} / ${String(this.state.uploadTotal)} files`,
       });
     }
 
@@ -234,7 +234,7 @@ export class ProgressModal extends Modal {
     }
 
     if (this.state.phase === 'error') {
-      contentEl.createEl('p', { cls: 'github-publish-step-error', text: this.state.error ?? '' });
+      childEl(contentEl, 'p', { cls: 'github-publish-step-error', text: this.state.error ?? '' });
       if (this.state.actionsUrl) {
         new Setting(contentEl).addButton((btn) =>
           btn.setButtonText('View Actions run').onClick(() => window.open(this.state.actionsUrl)),

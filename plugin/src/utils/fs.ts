@@ -1,13 +1,28 @@
 import * as fs from 'fs';
 
+function asString(value: unknown): string {
+  return value as string;
+}
+
+function asBuffer(value: unknown): Buffer {
+  return value as Buffer;
+}
+
+function asBoolean(value: unknown): boolean {
+  return value as boolean;
+}
+
 export function readTextFile(path: string): string {
-  return fs.readFileSync(path, 'utf8') as string;
+  const data: unknown = fs.readFileSync(path, 'utf8');
+  return asString(data);
 }
 
 export function readBytesFile(path: string): Buffer {
-  return fs.readFileSync(path) as Buffer;
+  const data: unknown = fs.readFileSync(path);
+  return asBuffer(data);
 }
 
 export function fileExists(path: string): boolean {
-  return fs.existsSync(path) as boolean;
+  const exists: unknown = fs.existsSync(path);
+  return asBoolean(exists);
 }

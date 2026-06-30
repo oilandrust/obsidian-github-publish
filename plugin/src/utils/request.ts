@@ -2,5 +2,6 @@ import { requestUrl, type RequestUrlParam, type RequestUrlResponse } from 'obsid
 
 /** Typed wrapper — contains requestUrl inference for community ESLint scans. */
 export async function fetchUrl(params: RequestUrlParam): Promise<RequestUrlResponse> {
-  return (await requestUrl(params)) as RequestUrlResponse;
+  const response: unknown = await requestUrl(params);
+  return response as RequestUrlResponse;
 }

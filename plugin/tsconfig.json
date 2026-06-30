@@ -13,8 +13,13 @@
     "strictNullChecks": true,
     "useUnknownInCatchVariables": true,
     "skipLibCheck": true,
+    "jsx": "react-jsx",
     "lib": ["DOM", "ES2021"]
   },
-  "include": ["**/*.ts"],
-  "exclude": ["assets/toolchain-quartz/**", "assets/toolchain-inhouse/template/**", "node_modules"]
+  "include": [
+    "**/*.ts",
+    "assets/toolchain-inhouse/template/src/**/*.tsx",
+    "../template/src/**/*.tsx"
+  ],
+  "exclude": ["assets/toolchain-quartz/**", "node_modules"]
 }

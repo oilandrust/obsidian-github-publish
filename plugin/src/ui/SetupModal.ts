@@ -45,7 +45,7 @@ export class SetupModal extends Modal {
     contentEl.empty();
     contentEl.addClass('github-publish-modal');
 
-    contentEl.createEl('h2', { text: `GitHub Publish — Setup (step ${this.step}/4)` });
+    childEl(contentEl, 'h2', { text: `GitHub Publish — Setup (step ${String(this.step)}/4)` });
 
     switch (this.step) {
       case 1:
@@ -66,7 +66,7 @@ export class SetupModal extends Modal {
   }
 
   private renderSiteNameStep(container: HTMLElement): void {
-    container.createEl('p', {
+    childEl(container, 'p', {
       text: 'Choose a name for your published site. This appears in the browser tab and site header.',
     });
 
@@ -81,12 +81,12 @@ export class SetupModal extends Modal {
   }
 
   private renderFolderStep(container: HTMLElement): void {
-    container.createEl('p', {
+    childEl(container, 'p', {
       text: 'Select the vault folder to publish. Its contents will be copied to content/ in your GitHub repository.',
     });
 
     if (this.contentFolder) {
-      container.createEl('p', {
+      childEl(container, 'p', {
         cls: 'github-publish-selected-folder',
         text: `Selected: ${this.contentFolder || '(vault root)'}`,
       });
@@ -112,7 +112,7 @@ export class SetupModal extends Modal {
   }
 
   private renderRepoStep(container: HTMLElement): void {
-    container.createEl('p', { text: 'Create a new repository or use an existing empty one.' });
+    childEl(container, 'p', { text: 'Create a new repository or use an existing empty one.' });
 
     new Setting(container)
       .setName('Repository')
@@ -140,7 +140,7 @@ export class SetupModal extends Modal {
             .setPlaceholder('my-notes-site');
         });
     } else {
-      container.createEl('p', { text: 'Loading repositories…' });
+      childEl(container, 'p', { text: 'Loading repositories…' });
       void this.renderExistingRepos(container);
     }
   }
@@ -163,7 +163,7 @@ export class SetupModal extends Modal {
           });
         });
     } catch (error: unknown) {
-      container.createEl('p', {
+      childEl(container, 'p', {
         text: error instanceof Error ? error.message : String(error),
       });
     }
@@ -174,7 +174,7 @@ export class SetupModal extends Modal {
       ? countFilesInFolder(this.app.vault, this.contentFolder)
       : 0;
 
-    container.createEl('p', { text: 'Review your publish settings:' });
+    childEl(container, 'p', { text: 'Review your publish settings:' });
 
     const summary = childEl(container, 'dl', { cls: 'github-publish-summary' });
     this.addSummaryRow(summary, 'Site name', this.siteName);
