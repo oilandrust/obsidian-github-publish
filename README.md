@@ -87,9 +87,8 @@ More detail: [plugin/README.md](plugin/README.md).
 plugin/          Obsidian plugin (manifest, main.ts, bundled toolchains)
   assets/
     toolchain-quartz/   Default static site generator (Quartz)
-    toolchain-inhouse/  Alternative Vite + React template
-scripts/         Build and toolchain sync helpers
-template/        Standalone in-house site template (local dev)
+    toolchain-inhouse/  Alternative Vite + React template (shipped to published sites)
+  scripts/       Dev helpers (sync toolchains, upgrade published sites)
 Wiki/            Design notes and specifications
 ```
 

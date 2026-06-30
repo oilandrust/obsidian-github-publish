@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Push updated bundled toolchain files to published Quartz sites.
- * Usage: node scripts/upgrade-site-toolchain.mjs <owner/repo> [...]
+ * Usage: node plugin/scripts/upgrade-site-toolchain.mjs <owner/repo> [...]
  */
 import { execSync } from 'child_process';
 import fs from 'fs';
@@ -9,8 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, '..');
-const PLUGIN_DIR = path.join(ROOT, 'plugin');
+const PLUGIN_DIR = path.resolve(__dirname, '..');
 const TOOLCHAIN_DIR = path.join(PLUGIN_DIR, 'assets', 'toolchain-quartz');
 const DEFAULT_QUARTZ_COMMIT = '9cf87ff1c248a8ca551093214b0fec3b31415009';
 

@@ -10,9 +10,9 @@ From the repo root:
 npm run build:plugin
 ```
 
-This runs `sync:toolchain` (bundles both template engines) then compiles the plugin.
+This runs `sync:toolchain` (refreshes toolchain manifests and Quartz bundle) then compiles the plugin.
 
-Or from this directory (after `npm run sync:toolchain` from root):
+Or from this directory (after `npm run sync:toolchain` from the repo root):
 
 ```bash
 npm install

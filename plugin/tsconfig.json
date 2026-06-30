@@ -19,8 +19,7 @@
   },
   "include": [
     "**/*.ts",
-    "assets/toolchain-inhouse/template/src/**/*.tsx",
-    "../template/src/**/*.tsx"
+    "assets/toolchain-inhouse/template/src/**/*.tsx"
   ],
   "exclude": [
     "assets/toolchain-quartz/**",

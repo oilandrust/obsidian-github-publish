@@ -20,8 +20,7 @@
   },
   "include": [
     "plugin/**/*.ts",
-    "plugin/assets/toolchain-inhouse/template/src/**/*.tsx",
-    "template/src/**/*.tsx"
+    "plugin/assets/toolchain-inhouse/template/src/**/*.tsx"
   ],
   "exclude": [
     "**/node_modules",
