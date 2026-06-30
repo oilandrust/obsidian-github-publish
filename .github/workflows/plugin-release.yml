@@ -21,6 +21,9 @@ jobs:
           cache: npm
           cache-dependency-path: plugin/package-lock.json
 
+      - name: Sync plugin manifest
+        run: cp manifest.json plugin/manifest.json
+
       - name: Install dependencies
         run: npm ci --prefix plugin
 
@@ -39,16 +42,16 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             tag="${GITHUB_REF#refs/tags/}"
           else
-            tag=$(node -p "require('./plugin/manifest.json').version")
+            tag=$(node -p "require('./manifest.json').version")
           fi
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" plugin/main.js plugin/manifest.json plugin/styles.css plugin-dist.zip --clobber
+            gh release upload "$tag" manifest.json plugin/main.js plugin/styles.css plugin-dist.zip --clobber
           else
             gh release create "$tag" \
               --title="$tag" \
               --notes="See [README](https://github.com/oilandrust/obsidian-github-publish#install) for install instructions." \
+              manifest.json \
               plugin/main.js \
-              plugin/manifest.json \
               plugin/styles.css \
               plugin-dist.zip
           fi
