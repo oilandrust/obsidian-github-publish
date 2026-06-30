@@ -123,7 +123,7 @@ function upgradeSite(siteKey) {
     context.owner,
     context.repo,
     files,
-    'Update Quartz toolchain (cache npm and plugins in CI)',
+    'Update Quartz toolchain (actions/cache v5)',
   );
 
   console.log(`Committed ${sha.slice(0, 7)} to ${siteKey}`);

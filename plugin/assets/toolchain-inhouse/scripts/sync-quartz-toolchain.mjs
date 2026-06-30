@@ -52,7 +52,7 @@ jobs:
           git checkout {{quartzCommitSha}}
 
       - name: Restore Quartz dependency cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: quartz-deps-cache
         with:
           path: |
