@@ -7,7 +7,7 @@ import { saveSetupConfig, startPublish } from '../publish/startPublish';
 import { getOptionalVaultFolder } from '../utils/vault';
 import { FolderTree } from './FolderTree';
 import { childDiv, childEl } from './dom';
-import { elAddClass, elEmpty, elSetAttr, focusElement } from './element';
+import { elAddClass, elEmpty, focusElement } from './element';
 import { closeModal } from './modalApi';
 import { showNotice } from './notices';
 import { addSetting } from './settingsUi';

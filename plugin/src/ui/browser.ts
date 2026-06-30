@@ -1,4 +1,4 @@
-import { callBound, callFn } from '../utils/call';
+import { callFn } from '../utils/call';
 
 export function openUrl(url: string): void {
   const openFn: unknown = Reflect.get(globalThis, 'open');

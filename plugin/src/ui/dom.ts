@@ -1,7 +1,6 @@
-import type { DomElementInfo } from 'obsidian';
 import { callBound } from '../utils/call';
 
-type DomOpts = DomElementInfo | string;
+type DomOpts = string | undefined | Record<string, unknown>;
 
 function asElement<T extends HTMLElement>(value: unknown): T {
   return value as T;

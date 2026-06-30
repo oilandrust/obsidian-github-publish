@@ -21,6 +21,7 @@ function FolderItem({
   node,
   depth,
 }: {
+  key?: string;
   node: Extract<TreeNode, { type: 'folder' }>;
   depth: number;
 }): ReactElement {

@@ -1,4 +1,4 @@
-import { App, PluginSettingTab } from 'obsidian';
+import { App, Plugin, PluginSettingTab } from 'obsidian';
 import { fetchGitHubUser } from './src/github/auth';
 import { connectGitHub } from './src/github/connect';
 import {

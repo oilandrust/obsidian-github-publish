@@ -49,11 +49,11 @@ export function createRoot(container: HTMLElement): ReactRoot {
   };
 }
 
-export function h<P extends Record<string, unknown>>(
-  type: string | ComponentType<P>,
-  props: P | null,
+export function h(
+  type: unknown,
+  props: Record<string, unknown> | null,
   ...children: ReactNode[]
 ): ReactElement {
-  const node: unknown = callFn(createElementImpl, type, props, ...children);
+  const node: unknown = callFn(createElementImpl, type, props ?? {}, ...children);
   return node as ReactElement;
 }
