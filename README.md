@@ -1,15 +1,20 @@
-# Obsidian GitHub Publish
+# GitHub Publish
 
-An [Obsidian](https://obsidian.md) plugin that publishes vault notes to **GitHub Pages** for free—no local git required.
+A plugin that publishes vault notes to **GitHub Pages** for free in a few clicks.
 
 Pick a folder in your vault, connect GitHub, and the plugin creates a repository, pushes your notes, and configures GitHub Actions to build and deploy a static site. Updates are a single **Publish changes** click.
 
-![Published site example (dark theme)](Wiki/publish-example-dark.png)
+## Live Demo
+
+Checkout the Wiki of the project that is published with the Quartz template.
+
+[Example Wiki](https://oilandrust.github.io/githubpublish-wiki/)
+
+![Published site example (light theme)](Wiki/publish-example-light.png)
 
 ## Features
 
 - **One-click setup** — choose a content folder, site name, and repository; the plugin handles the rest
-- **No system git** — commits are created via the GitHub Git Database API over HTTPS
 - **Quartz by default** — Obsidian-flavored markdown, backlinks, and graph view out of the box
 - **Incremental publishes** — only changed notes are uploaded after the initial publish
 - **Multi-site** — publish several folders from one vault to separate repositories
@@ -22,7 +27,13 @@ Pick a folder in your vault, connect GitHub, and the plugin creates a repository
 3. A commit to `main` triggers GitHub Actions, which builds `dist/` and deploys to GitHub Pages.
 4. Later publishes diff your vault folder against a stored manifest and push only what changed.
 
-See [Wiki/Publish Architecture.md](Wiki/Publish%20Architecture.md) for the full design.
+## Missing some features?
+
+The pluggin is in a early prototype version and I am curious to know what features you would like to see, get in touch directly via email: o.rouiller@gmail.com.
+
+## Some Issue?
+
+Please report issues and bugs on the [GitHub Issue Page](https://github.com/oilandrust/obsidian-github-publish/issues)
 
 ## Install
 
