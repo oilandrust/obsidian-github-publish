@@ -139,7 +139,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     const isStale = () => checkId !== this.statusCheckId;
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'GitHub Publish' });
+    new Setting(containerEl).setName('GitHub Publish').setHeading();
 
     const connected = Boolean(this.plugin.settings.accessToken);
 
@@ -226,7 +226,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
 
     const { publishedSites } = this.plugin.settings;
     if (publishedSites.length > 0) {
-      containerEl.createEl('h3', { text: 'Published sites' });
+      new Setting(containerEl).setName('Published sites').setHeading();
       const sitesContainer = containerEl.createDiv({ cls: 'github-publish-sites-list' });
       for (const site of publishedSites) {
         new PublishedSiteCard(
@@ -246,7 +246,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
   }
 
   private renderAdvancedSettings(containerEl: HTMLElement): void {
-    containerEl.createEl('h3', { text: 'Advanced' });
+    new Setting(containerEl).setName('Advanced').setHeading();
 
     new Setting(containerEl)
       .setName('Template engine')
@@ -305,7 +305,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
   }
 
   private renderDevelopmentSettings(containerEl: HTMLElement): void {
-    containerEl.createEl('h3', { text: 'Development' });
+    new Setting(containerEl).setName('Development').setHeading();
 
     new Setting(containerEl)
       .setName('Preview publish success')
@@ -321,7 +321,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
   }
 
   private renderSavedSetup(containerEl: HTMLElement, saved: NonNullable<PluginSettings['savedSetup']>): void {
-    containerEl.createEl('h3', { text: 'Saved setup' });
+    new Setting(containerEl).setName('Saved setup').setHeading();
     const summary = containerEl.createEl('dl', { cls: 'github-publish-summary' });
     this.addSummaryRow(summary, 'Site name', saved.siteName);
     this.addSummaryRow(summary, 'Vault folder', saved.contentFolder);
