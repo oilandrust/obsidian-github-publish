@@ -312,14 +312,15 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Preview publish success')
       .setDesc('Open the success screen with mock data for githubpublish-wiki.')
-      .addButton((btn) =>
-        btn.setButtonText('Preview').onClick(() => {
+      .addButton((btn) => {
+        btn.setButtonText('Preview');
+        btn.onClick(() => {
           ProgressModal.openDonePreview(this.app, {
             mode: 'incremental',
             liveUrl: 'https://oilandrust.github.io/githubpublish-wiki/',
           });
-        }),
-      );
+        });
+      });
   }
 
   private renderSavedSetup(containerEl: HTMLElement, saved: NonNullable<PluginSettings['savedSetup']>): void {
@@ -333,15 +334,16 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       saved.repoMode === 'create' ? `Create: ${saved.repoName}` : `Existing: ${saved.repoName}`,
     );
 
-    new Setting(containerEl).addButton((btn) =>
-      btn.setButtonText('Continue publish').setCta().onClick(() => {
+    new Setting(containerEl).addButton((btn) => {
+      btn.setButtonText('Continue publish').setCta();
+      btn.onClick(() => {
         if (!this.plugin.settings.accessToken) {
           new Notice('Connect to GitHub in settings first.');
           return;
         }
         startPublish(this.plugin);
-      }),
-    );
+      });
+    });
   }
 
   private addSummaryRow(dl: HTMLElement, label: string, value: string): void {

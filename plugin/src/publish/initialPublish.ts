@@ -123,7 +123,9 @@ export function getPluginDir(app: App, pluginId: string): string {
   }
   const basePath: string = adapter.getBasePath();
   const configDir: string = app.vault.configDir;
-  return normalizePath(pathJoin(basePath, configDir, 'plugins', pluginId));
+  const joined = pathJoin(basePath, configDir, 'plugins', pluginId);
+  const normalized: unknown = normalizePath(joined);
+  return normalized as string;
 }
 
 function pathJoin(...parts: string[]): string {

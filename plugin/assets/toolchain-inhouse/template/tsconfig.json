@@ -15,7 +15,13 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "react": ["../../../../plugin/node_modules/@types/react/index.d.ts"],
+      "react/jsx-runtime": ["../../../../plugin/node_modules/@types/react/jsx-runtime.d.ts"],
+      "react-router-dom": ["../../../../plugin/node_modules/react-router-dom/dist/index.d.ts"]
+    }
   },
   "include": ["src"]
 }

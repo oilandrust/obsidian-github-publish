@@ -226,31 +226,50 @@ export class ProgressModal extends Modal {
     if (this.state.phase === 'done' && this.state.liveUrl) {
       this.renderLiveUrlRow(contentEl, this.state.liveUrl);
       new Setting(contentEl)
-        .addButton((btn) =>
-          btn.setButtonText('Open site').setCta().onClick(() => window.open(this.state.liveUrl)),
-        )
-        .addButton((btn) => btn.setButtonText('Close').onClick(() => this.close()));
+        .addButton((btn) => {
+          btn.setButtonText('Open site').setCta();
+          btn.onClick(() => {
+            const url = this.state.liveUrl;
+            if (url) window.open(url);
+          });
+        })
+        .addButton((btn) => {
+          btn.setButtonText('Close');
+          btn.onClick(() => {
+            this.close();
+          });
+        });
       return;
     }
 
     if (this.state.phase === 'error') {
       childEl(contentEl, 'p', { cls: 'github-publish-step-error', text: this.state.error ?? '' });
       if (this.state.actionsUrl) {
-        new Setting(contentEl).addButton((btn) =>
-          btn.setButtonText('View Actions run').onClick(() => window.open(this.state.actionsUrl)),
-        );
+        new Setting(contentEl).addButton((btn) => {
+          btn.setButtonText('View Actions run');
+          btn.onClick(() => {
+            const url = this.state.actionsUrl;
+            if (url) window.open(url);
+          });
+        });
       }
-      new Setting(contentEl).addButton((btn) => btn.setButtonText('Close').onClick(() => this.close()));
+      new Setting(contentEl).addButton((btn) => {
+        btn.setButtonText('Close');
+        btn.onClick(() => {
+          this.close();
+        });
+      });
       return;
     }
 
-    new Setting(contentEl).addButton((btn) =>
-      btn.setButtonText('Continue in background').onClick(() => {
+    new Setting(contentEl).addButton((btn) => {
+      btn.setButtonText('Continue in background');
+      btn.onClick(() => {
         this.runningInBackground = true;
         new Notice('Publishing in background — you will be notified when it finishes.');
         this.close();
-      }),
-    );
+      });
+    });
   }
 
   private renderLiveUrlRow(container: HTMLElement, liveUrl: string): void {
@@ -271,8 +290,12 @@ export class ProgressModal extends Modal {
       '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
     copyBtn.addEventListener('click', () => {
       void navigator.clipboard.writeText(liveUrl).then(
-        () => new Notice('Site URL copied to clipboard'),
-        () => new Notice('Could not copy URL'),
+        () => {
+          new Notice('Site URL copied to clipboard');
+        },
+        () => {
+          new Notice('Could not copy URL');
+        },
       );
     });
   }

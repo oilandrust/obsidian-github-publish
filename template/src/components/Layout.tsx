@@ -1,25 +1,30 @@
+import type { ComponentType, ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { FileTree } from './FileTree';
 import type { SiteData } from '../types';
+import { h } from '../ui';
 
 interface LayoutProps {
   siteData: SiteData;
 }
 
-export function Layout({ siteData }: LayoutProps) {
-  return (
-    <div className="layout">
-      <aside className="sidebar">
-        <header className="sidebar-header">
-          <h1 className="site-title">{siteData.siteName}</h1>
-        </header>
-        <nav className="file-tree-nav">
-          <FileTree tree={siteData.tree} />
-        </nav>
-      </aside>
-      <main className="main-content">
-        <Outlet />
-      </main>
-    </div>
+const MainOutlet = Outlet as ComponentType<Record<string, unknown>>;
+const Tree = FileTree as ComponentType<Record<string, unknown>>;
+
+export function Layout({ siteData }: LayoutProps): ReactElement {
+  return h(
+    'div',
+    { className: 'layout' },
+    h(
+      'aside',
+      { className: 'sidebar' },
+      h(
+        'header',
+        { className: 'sidebar-header' },
+        h('h1', { className: 'site-title' }, siteData.siteName),
+      ),
+      h('nav', { className: 'file-tree-nav' }, h(Tree, { tree: siteData.tree })),
+    ),
+    h('main', { className: 'main-content' }, h(MainOutlet, null)),
   );
 }

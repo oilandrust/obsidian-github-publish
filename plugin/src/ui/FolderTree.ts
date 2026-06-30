@@ -22,7 +22,7 @@ export class FolderTree {
     const root = this.app.vault.getRoot();
     const topFolders = root.children
       .filter((child): child is TFolder => child instanceof TFolder)
-      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+      .sort((a, b): number => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
     for (const folder of topFolders) {
       this.renderFolder(tree, folder, 0);
@@ -71,7 +71,7 @@ export class FolderTree {
 
     if (hasSubfolders && isExpanded) {
       const children = childDiv(parent, { cls: 'github-publish-folder-children' });
-      for (const child of subfolders.sort((a, b) =>
+      for (const child of subfolders.sort((a, b): number =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
       )) {
         this.renderFolder(children, child, depth + 1);
