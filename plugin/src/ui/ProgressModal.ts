@@ -2,6 +2,7 @@ import { App, Modal, Notice, Setting } from 'obsidian';
 import { pollWorkflowRun } from '../github/actions';
 import { PublishResult } from '../publish/initialPublish';
 import { ProgressPhase, ProgressState } from '../settings';
+import { childDiv, childEl, childSpan } from './dom';
 
 export type ProgressModalMode = 'full' | 'incremental';
 
@@ -179,7 +180,7 @@ export class ProgressModal extends Modal {
         : 'Publishing to GitHub Pages';
     contentEl.createEl('h2', { text: title });
 
-    const steps = contentEl.createDiv({ cls: 'github-publish-steps' });
+    const steps = childDiv(contentEl, { cls: 'github-publish-steps' });
     const phases = this.getPhases();
 
     const order = phases.map((p) => p.phase);
@@ -189,9 +190,11 @@ export class ProgressModal extends Modal {
       this.state.phase === 'error' ? failedIndex : order.indexOf(this.state.phase);
 
     for (let i = 0; i < phases.length; i++) {
-      const { label } = phases[i];
-      const row = steps.createDiv({ cls: 'github-publish-step' });
-      const icon = row.createSpan({ cls: 'github-publish-step-icon' });
+      const phase = phases[i];
+      if (!phase) continue;
+      const { label } = phase;
+      const row = childDiv(steps, { cls: 'github-publish-step' });
+      const icon = childSpan(row, { cls: 'github-publish-step-icon' });
 
       if (this.state.phase === 'error' && i === failedIndex) {
         row.addClass('github-publish-step-error');
@@ -207,7 +210,7 @@ export class ProgressModal extends Modal {
         icon.setText('○');
       }
 
-      row.createSpan({ text: label });
+      childSpan(row, { text: label });
     }
 
     contentEl.createEl('p', { text: this.state.message });
@@ -251,8 +254,8 @@ export class ProgressModal extends Modal {
   }
 
   private renderLiveUrlRow(container: HTMLElement, liveUrl: string): void {
-    const row = container.createDiv({ cls: 'github-publish-live-url-row' });
-    const link = row.createEl('a', {
+    const row = childDiv(container, { cls: 'github-publish-live-url-row' });
+    const link = childEl(row, 'a', {
       cls: 'github-publish-live-link',
       href: liveUrl,
       text: liveUrl,
@@ -260,7 +263,7 @@ export class ProgressModal extends Modal {
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
 
-    const copyBtn = row.createEl('button', {
+    const copyBtn = childEl(row, 'button', {
       cls: 'clickable-icon github-publish-copy-url',
     });
     copyBtn.setAttr('aria-label', 'Copy site URL');

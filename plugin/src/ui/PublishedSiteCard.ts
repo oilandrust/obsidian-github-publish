@@ -10,6 +10,7 @@ import {
 } from '../quartz/versions';
 import { showAdvancedSettings } from '../buildFlags';
 import { GitHubPublishHost } from '../pluginHost';
+import { childDiv, childEl, childSpan } from './dom';
 
 export class PublishedSiteCard {
   constructor(
@@ -25,10 +26,10 @@ export class PublishedSiteCard {
     const repoUrl = getSiteRepoUrl(this.site);
     const token = this.plugin.settings.accessToken;
 
-    const card = container.createDiv({ cls: 'github-publish-site-card' });
-    card.createEl('h4', { text: this.site.siteName });
+    const card = childDiv(container, { cls: 'github-publish-site-card' });
+    childEl(card, 'h4', { text: this.site.siteName });
 
-    const summary = card.createEl('dl', { cls: 'github-publish-summary' });
+    const summary = childEl(card, 'dl', { cls: 'github-publish-summary' });
     this.addSummaryRow(summary, 'Vault folder', this.site.contentFolder);
 
     if (showAdvancedSettings) {
@@ -43,13 +44,13 @@ export class PublishedSiteCard {
       }
     }
 
-    summary.createEl('dt', { text: 'Repository' });
-    const repoValue = summary.createEl('dd', { cls: 'github-publish-summary-inline' });
-    const repoStatus = repoValue.createSpan({
+    childEl(summary, 'dt', { text: 'Repository' });
+    const repoValue = childEl(summary, 'dd', { cls: 'github-publish-summary-inline' });
+    const repoStatus = childSpan(repoValue, {
       cls: 'github-publish-status github-publish-status-checking',
     });
     repoStatus.setText('Checking…');
-    const repoLink = repoValue.createEl('a', {
+    const repoLink = childEl(repoValue, 'a', {
       cls: 'github-publish-summary-link',
       href: repoUrl,
       text: siteId(this.site.owner, this.site.repo),
@@ -57,13 +58,13 @@ export class PublishedSiteCard {
     repoLink.target = '_blank';
     repoLink.rel = 'noopener noreferrer';
 
-    summary.createEl('dt', { text: 'Live site' });
-    const liveValue = summary.createEl('dd', { cls: 'github-publish-summary-inline' });
-    const liveStatus = liveValue.createSpan({
+    childEl(summary, 'dt', { text: 'Live site' });
+    const liveValue = childEl(summary, 'dd', { cls: 'github-publish-summary-inline' });
+    const liveStatus = childSpan(liveValue, {
       cls: 'github-publish-status github-publish-status-checking',
     });
     liveStatus.setText('Checking…');
-    const liveLink = liveValue.createEl('a', {
+    const liveLink = childEl(liveValue, 'a', {
       cls: 'github-publish-summary-link',
       href: liveUrl,
       text: liveUrl,
@@ -71,9 +72,9 @@ export class PublishedSiteCard {
     liveLink.target = '_blank';
     liveLink.rel = 'noopener noreferrer';
 
-    summary.createEl('dt', { text: 'Changes' });
-    const changesValue = summary.createEl('dd', { cls: 'github-publish-changes-row' });
-    const changesStatus = changesValue.createSpan({
+    childEl(summary, 'dt', { text: 'Changes' });
+    const changesValue = childEl(summary, 'dd', { cls: 'github-publish-changes-row' });
+    const changesStatus = childSpan(changesValue, {
       cls: 'github-publish-status github-publish-status-checking',
     });
 
@@ -85,7 +86,7 @@ export class PublishedSiteCard {
     } else {
       changesStatus.setText('Checking for changes…');
 
-      publishBtn = changesValue.createEl('button', {
+      publishBtn = childEl(changesValue, 'button', {
         cls: 'mod-cta github-publish-changes-button',
         text: 'Publish changes',
       });
@@ -158,7 +159,7 @@ export class PublishedSiteCard {
   }
 
   private addSummaryRow(dl: HTMLElement, label: string, value: string): void {
-    dl.createEl('dt', { text: label });
-    dl.createEl('dd', { text: value || '—' });
+    childEl(dl, 'dt', { text: label });
+    childEl(dl, 'dd', { text: value || '—' });
   }
 }

@@ -5,6 +5,7 @@ import { SetupConfig } from '../settings';
 import { countFilesInFolder } from '../publish/scanVault';
 import { saveSetupConfig, startPublish } from '../publish/startPublish';
 import { FolderTree } from './FolderTree';
+import { childDiv, childEl } from './dom';
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -72,7 +73,7 @@ export class SetupModal extends Modal {
     new Setting(container)
       .setName('Site name')
       .addText((text) => {
-        text.setValue(this.siteName).onChange((value) => {
+        text.setValue(this.siteName).onChange((value: string) => {
           this.siteName = value;
         });
         text.inputEl.focus();
@@ -91,7 +92,7 @@ export class SetupModal extends Modal {
       });
     }
 
-    const treeHost = container.createDiv({ cls: 'github-publish-folder-tree-host' });
+    const treeHost = childDiv(container, { cls: 'github-publish-folder-tree-host' });
     new FolderTree(this.app, treeHost, {
       selectedPath: this.contentFolder,
       expandedPaths: this.expandedFolders,
@@ -133,7 +134,7 @@ export class SetupModal extends Modal {
         .addText((text) => {
           text
             .setValue(this.repoName)
-            .onChange((value) => {
+            .onChange((value: string) => {
               this.repoName = value;
             })
             .setPlaceholder('my-notes-site');
@@ -157,7 +158,7 @@ export class SetupModal extends Modal {
           for (const repo of repos) {
             dropdown.addOption(repo.name, repo.full_name);
           }
-          dropdown.setValue(this.repoName).onChange((value) => {
+          dropdown.setValue(this.repoName).onChange((value: string) => {
             this.repoName = value;
           });
         });
@@ -175,7 +176,7 @@ export class SetupModal extends Modal {
 
     container.createEl('p', { text: 'Review your publish settings:' });
 
-    const summary = container.createEl('dl', { cls: 'github-publish-summary' });
+    const summary = childEl(container, 'dl', { cls: 'github-publish-summary' });
     this.addSummaryRow(summary, 'Site name', this.siteName);
     this.addSummaryRow(summary, 'Vault folder', this.contentFolder);
     this.addSummaryRow(summary, 'GitHub account', this.plugin.settings.githubUsername ?? '');
@@ -195,22 +196,22 @@ export class SetupModal extends Modal {
   }
 
   private addSummaryRow(dl: HTMLElement, label: string, value: string): void {
-    dl.createEl('dt', { text: label });
-    dl.createEl('dd', { text: value || '—' });
+    childEl(dl, 'dt', { text: label });
+    childEl(dl, 'dd', { text: value || '—' });
   }
 
   private renderNav(container: HTMLElement): void {
-    const nav = container.createDiv({ cls: 'github-publish-buttons' });
+    const nav = childDiv(container, { cls: 'github-publish-buttons' });
 
     if (this.step > 1) {
-      const backBtn = nav.createEl('button', { text: 'Back' });
+      const backBtn = childEl(nav, 'button', { text: 'Back' });
       backBtn.addEventListener('click', () => {
         this.step = (this.step - 1) as WizardStep;
         this.render();
       });
     }
 
-    const nextBtn = nav.createEl('button', {
+    const nextBtn = childEl(nav, 'button', {
       text: this.step === 4 ? 'Publish' : 'Next',
       cls: 'mod-cta',
     });

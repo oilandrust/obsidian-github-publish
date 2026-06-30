@@ -23,6 +23,7 @@ import {
   TESTED_QUARTZ_VERSIONS,
 } from './src/quartz/versions';
 import { showAdvancedSettings } from './src/buildFlags';
+import { childDiv, childEl } from './src/ui/dom';
 
 export default class GitHubPublishPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
@@ -227,7 +228,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     const { publishedSites } = this.plugin.settings;
     if (publishedSites.length > 0) {
       new Setting(containerEl).setName('Published sites').setHeading();
-      const sitesContainer = containerEl.createDiv({ cls: 'github-publish-sites-list' });
+      const sitesContainer = childDiv(containerEl, { cls: 'github-publish-sites-list' });
       for (const site of publishedSites) {
         new PublishedSiteCard(
           this.app,
@@ -276,11 +277,12 @@ class GitHubPublishSettingTab extends PluginSettingTab {
             dropdown.addOption(version.sha, version.label);
           }
           dropdown.addOption('custom', 'Custom commit…');
-          dropdown.setValue(dropdownValue).onChange(async (value) => {
+          dropdown.setValue(dropdownValue).onChange(async (value: string) => {
             if (value === 'custom') {
               this.plugin.settings.quartzCommitSha = isKnownSha ? '' : activeSha;
             } else {
-              this.plugin.settings.quartzCommitSha = value;
+              const sha: string = value;
+              this.plugin.settings.quartzCommitSha = sha;
             }
             await this.plugin.saveSettings();
             this.display();
@@ -295,8 +297,9 @@ class GitHubPublishSettingTab extends PluginSettingTab {
             text
               .setPlaceholder(DEFAULT_QUARTZ_COMMIT)
               .setValue(this.plugin.settings.quartzCommitSha ?? '')
-              .onChange(async (value) => {
-                this.plugin.settings.quartzCommitSha = value.trim() || null;
+              .onChange(async (value: string) => {
+                const trimmed: string = value.trim();
+                this.plugin.settings.quartzCommitSha = trimmed || null;
                 await this.plugin.saveSettings();
               });
           });
@@ -322,7 +325,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
 
   private renderSavedSetup(containerEl: HTMLElement, saved: NonNullable<PluginSettings['savedSetup']>): void {
     new Setting(containerEl).setName('Saved setup').setHeading();
-    const summary = containerEl.createEl('dl', { cls: 'github-publish-summary' });
+    const summary = childEl(containerEl, 'dl', { cls: 'github-publish-summary' });
     this.addSummaryRow(summary, 'Site name', saved.siteName);
     this.addSummaryRow(summary, 'Vault folder', saved.contentFolder);
     this.addSummaryRow(
@@ -343,7 +346,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
   }
 
   private addSummaryRow(dl: HTMLElement, label: string, value: string): void {
-    dl.createEl('dt', { text: label });
-    dl.createEl('dd', { text: value || '—' });
+    childEl(dl, 'dt', { text: label });
+    childEl(dl, 'dd', { text: value || '—' });
   }
 }

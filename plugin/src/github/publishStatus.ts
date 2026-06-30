@@ -1,4 +1,4 @@
-import { requestUrl, RequestUrlResponse } from 'obsidian';
+import { fetchUrl } from '../utils/request';
 import { githubRequest, GitHubApiError } from './client';
 import { log } from '../log';
 
@@ -39,7 +39,7 @@ async function checkRepository(
       return { status: 'live', detail: 'Repository reachable' };
     }
 
-    const response: RequestUrlResponse = await requestUrl({
+    const response = await fetchUrl({
       url: `https://api.github.com/repos/${owner}/${repo}`,
       method: 'GET',
       headers: {
@@ -74,7 +74,7 @@ async function checkRepository(
 
 async function checkLiveSite(liveUrl: string): Promise<StatusCheck> {
   try {
-    const response: RequestUrlResponse = await requestUrl({
+    const response = await fetchUrl({
       url: liveUrl,
       method: 'GET',
       throw: false,

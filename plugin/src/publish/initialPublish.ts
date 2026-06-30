@@ -121,9 +121,9 @@ export function getPluginDir(app: App, pluginId: string): string {
   if (!(adapter instanceof FileSystemAdapter)) {
     throw new Error('GitHub Publish requires the desktop app.');
   }
-  return normalizePath(
-    pathJoin(adapter.getBasePath(), app.vault.configDir, 'plugins', pluginId),
-  );
+  const basePath: string = adapter.getBasePath();
+  const configDir: string = app.vault.configDir;
+  return normalizePath(pathJoin(basePath, configDir, 'plugins', pluginId));
 }
 
 function pathJoin(...parts: string[]): string {

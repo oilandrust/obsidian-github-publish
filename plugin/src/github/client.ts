@@ -1,6 +1,7 @@
-import { requestUrl, RequestUrlResponse } from 'obsidian';
+import { fetchUrl } from '../utils/request';
 import { log, logWarn } from '../log';
 import { parseJson } from '../utils/json';
+import { fetchUrl } from '../utils/request';
 
 const GITHUB_API = 'https://api.github.com';
 
@@ -70,7 +71,7 @@ export async function githubRequest<T>(
 
   log(`${method} ${apiPath}`);
 
-  const response: RequestUrlResponse = await requestUrl({
+  const response = await fetchUrl({
     url: apiPath.startsWith('http') ? apiPath : `${GITHUB_API}${apiPath}`,
     method,
     headers,
@@ -132,7 +133,7 @@ export async function githubFormRequest<T>(
   fields: Record<string, string>,
 ): Promise<T> {
   const body = new URLSearchParams(fields).toString();
-  const response: RequestUrlResponse = await requestUrl({
+  const response = await fetchUrl({
     url,
     method: 'POST',
     headers: {

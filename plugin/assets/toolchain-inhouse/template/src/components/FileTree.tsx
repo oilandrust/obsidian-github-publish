@@ -17,7 +17,7 @@ function nodeIcon(node: TreeNode): string {
 }
 
 function FolderItem({ node, depth }: { node: Extract<TreeNode, { type: 'folder' }>; depth: number }) {
-  const [open, setOpen] = useState(depth < 1);
+  const [open, setOpen] = useState<boolean>(depth < 1);
 
   return (
     <li className="tree-folder">

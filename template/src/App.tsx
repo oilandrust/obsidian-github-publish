@@ -5,7 +5,7 @@ import { Layout } from './components/Layout';
 import { findFirstNavigableNode, findNodeById, type SiteData } from './types';
 
 function Viewer({ siteData }: { siteData: SiteData }) {
-  const { id: routeId } = useParams();
+  const routeId: string | undefined = useParams().id;
   const id = typeof routeId === 'string' ? routeId : undefined;
   const node = id ? findNodeById(siteData.tree, id) : null;
 
@@ -26,7 +26,7 @@ function Viewer({ siteData }: { siteData: SiteData }) {
 
 export default function App() {
   const [siteData, setSiteData] = useState<SiteData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -39,16 +39,16 @@ export default function App() {
         document.title = data.siteName;
         setSiteData(data);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : String(err));
+        setLoadError(err instanceof Error ? err.message : String(err));
       }
     })();
   }, []);
 
-  if (error) {
+  if (loadError) {
     return (
       <div className="app-error">
         <h1>Failed to load site</h1>
-        <p>{error}</p>
+        <p>{loadError}</p>
         <p className="app-error-hint">Run the build script to generate site-data.json.</p>
       </div>
     );
@@ -58,12 +58,14 @@ export default function App() {
     return <div className="app-loading">Loading…</div>;
   }
 
+  const data: SiteData = siteData;
+
   return (
     <Routes>
-      <Route path="/" element={<Layout siteData={siteData} />}>
+      <Route path="/" element={<Layout siteData={data} />}>
         <Route index element={<Navigate to="/view" replace />} />
-        <Route path="view" element={<Viewer siteData={siteData} />} />
-        <Route path="view/:id" element={<Viewer siteData={siteData} />} />
+        <Route path="view" element={<Viewer siteData={data} />} />
+        <Route path="view/:id" element={<Viewer siteData={data} />} />
       </Route>
     </Routes>
   );

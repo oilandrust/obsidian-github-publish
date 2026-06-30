@@ -1,5 +1,11 @@
 import { TAbstractFile, TFile, TFolder, Vault } from 'obsidian';
 import { RepoFile } from '../settings';
+import {
+  asFile,
+  getVaultFolder,
+  getVaultRootFolder,
+  readVaultBinary,
+} from '../utils/vault';
 
 const EXCLUDED_DIRS = new Set(['.git', '.obsidian', 'node_modules']);
 const EXCLUDED_FILES = new Set(['.DS_Store']);
@@ -22,10 +28,7 @@ export interface ScanResult {
 }
 
 export async function scanVaultFolder(vault: Vault, folderPath: string): Promise<ScanResult> {
-  const folder = vault.getAbstractFileByPath(folderPath);
-  if (!(folder instanceof TFolder)) {
-    throw new Error(`Folder not found: ${folderPath}`);
-  }
+  const folder = getVaultFolder(vault, folderPath);
 
   const files: RepoFile[] = [];
   const warnings: string[] = [];
@@ -49,9 +52,10 @@ async function walkFolder(
       continue;
     }
 
-    if (!(child instanceof TFile)) continue;
+    const file = asFile(child);
+    if (!file) continue;
 
-    const relative = child.path.slice(rootPath.length).replace(/^\//, '');
+    const relative = file.path.slice(rootPath.length).replace(/^\//, '');
     const skip = shouldSkip(relative);
     if (skip === true) continue;
     if (typeof skip === 'string') {
@@ -59,10 +63,9 @@ async function walkFolder(
       continue;
     }
 
-    const repoPath = `content/${child.path.slice(rootPath.length).replace(/^\//, '')}`;
-    const arrayBuffer = await vault.readBinary(child);
-    const content = new Uint8Array(arrayBuffer);
-    const ext = child.extension.toLowerCase();
+    const repoPath = `content/${file.path.slice(rootPath.length).replace(/^\//, '')}`;
+    const content = await readVaultBinary(vault, file);
+    const ext: string = file.extension.toLowerCase();
     const encoding: 'utf-8' | 'base64' = ext === 'md' ? 'utf-8' : 'base64';
 
     files.push({ path: repoPath, content, encoding });
@@ -86,8 +89,7 @@ function shouldSkip(relativePath: string): true | string | false {
 }
 
 export function countFilesInFolder(vault: Vault, folderPath: string): number {
-  const folder = vault.getAbstractFileByPath(folderPath);
-  if (!(folder instanceof TFolder)) return 0;
+  const folder = folderPath === '' ? getVaultRootFolder(vault) : getVaultFolder(vault, folderPath);
 
   let count = 0;
   const walk = (node: TAbstractFile) => {
@@ -96,10 +98,10 @@ export function countFilesInFolder(vault: Vault, folderPath: string): number {
       node.children.forEach(walk);
       return;
     }
-    if (node instanceof TFile) {
-      const relative = node.path.slice(folderPath.length).replace(/^\//, '');
-      if (shouldSkip(relative) === false) count++;
-    }
+    const file = asFile(node);
+    if (!file) return;
+    const relative = file.path.slice(folderPath.length).replace(/^\//, '');
+    if (shouldSkip(relative) === false) count++;
   };
   walk(folder);
   return count;
