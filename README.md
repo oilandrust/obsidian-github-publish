@@ -1,8 +1,18 @@
-# GitHub Publish
+## Publish your notes for free in a few clicks
+The Plugin **Github Publish** allows you to publish your vault in minutes without the configuration hassle of the usual free solutions.
+The plugin uses [Quartz](https://quartz.jzhao.xyz/) as a rendering engine and GitHub Pages for hosting, but does all the configuration setup for you.
 
-A plugin that publishes vault notes to **GitHub Pages** for free in a few clicks.
+### Easy steps:
+- Authenticate with your GitHub account,
+- Give permissions (repo and actions)
+- Select the folder you want to publish, and the name of the site
+- Profit!
 
-Pick a folder in your vault, connect GitHub, and the plugin creates a repository, pushes your notes, and configures GitHub Actions to build and deploy a static site. Updates are a single **Publish changes** click.
+## Keep track of changes and publish your updated notes
+The plugin keeps track of edited notes, lets you know when there are changes, and lets you publish the latest notes with a click.
+
+## User Friendly UX
+The plugin is designed to make the process of publishing as smooth as possible and to give you the info you need to know what is going on. Just what you would expect from a modern usable software tool.
 
 ## Live Demo
 
