@@ -207,7 +207,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       this.renderAdvancedSettings(containerEl);
     }
 
-    this.renderDevelopmentSettings(containerEl);
+    //this.renderDevelopmentSettings(containerEl);
 
     new Setting(containerEl)
       .setName('Publish new site')
