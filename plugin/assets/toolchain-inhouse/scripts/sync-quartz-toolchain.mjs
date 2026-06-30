@@ -51,6 +51,17 @@ jobs:
           git fetch --depth 1 origin {{quartzCommitSha}}
           git checkout {{quartzCommitSha}}
 
+      - name: Restore Quartz dependency cache
+        uses: actions/cache@v4
+        id: quartz-deps-cache
+        with:
+          path: |
+            quartz-engine/node_modules
+            quartz-engine/.quartz/plugins
+          key: quartz-deps-{{quartzCommitSha}}-\${{ hashFiles('quartz.lock.json') }}
+          restore-keys: |
+            quartz-deps-{{quartzCommitSha}}-
+
       - name: Overlay user site
         run: |
           rm -rf quartz-engine/content
@@ -58,10 +69,12 @@ jobs:
           cp quartz.config.yaml quartz.lock.json quartz-engine/
 
       - name: Install dependencies
+        if: steps.quartz-deps-cache.outputs.cache-hit != 'true'
         working-directory: quartz-engine
         run: npm ci
 
       - name: Install Quartz plugins
+        if: steps.quartz-deps-cache.outputs.cache-hit != 'true'
         working-directory: quartz-engine
         run: npx quartz plugin install
 
