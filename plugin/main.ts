@@ -139,8 +139,6 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     const isStale = () => checkId !== this.statusCheckId;
     containerEl.empty();
 
-    new Setting(containerEl).setName('GitHub Publish').setHeading();
-
     const connected = Boolean(this.plugin.settings.accessToken);
 
     if (!connected) {
