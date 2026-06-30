@@ -19,7 +19,7 @@ export async function enableGitHubPages(token: string, owner: string, repo: stri
     await githubRequest(token, 'POST', `/repos/${owner}/${repo}/pages`, body);
     log(`Enabled GitHub Pages (workflow) for ${owner}/${repo}`);
     return;
-  } catch (error) {
+  } catch (error: unknown) {
     if (!(error instanceof GitHubApiError)) throw error;
 
     // Pages site already exists — switch source to GitHub Actions
@@ -45,7 +45,7 @@ async function pagesUsesWorkflowBuild(
       `/repos/${owner}/${repo}/pages`,
     );
     return site.build_type === 'workflow';
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof GitHubApiError && error.status === 404) {
       return false;
     }

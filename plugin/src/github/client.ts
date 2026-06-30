@@ -1,5 +1,6 @@
 import { requestUrl, RequestUrlResponse } from 'obsidian';
 import { log, logWarn } from '../log';
+import { parseJson } from '../utils/json';
 
 const GITHUB_API = 'https://api.github.com';
 
@@ -25,7 +26,7 @@ export function isGitRepositoryEmptyError(error: GitHubApiError): boolean {
   if (error.status !== 409) return false;
   if (!error.body) return false;
   try {
-    const parsed = JSON.parse(error.body) as { message?: string };
+    const parsed = parseJson<{ message?: string }>(error.body);
     return parsed.message === 'Git Repository is empty.';
   } catch {
     return error.body.includes('Git Repository is empty');
@@ -40,7 +41,7 @@ export function isMissingBranchRefError(error: unknown): boolean {
 function parseGitHubErrorMessage(body?: string): string | undefined {
   if (!body) return undefined;
   try {
-    const parsed = JSON.parse(body) as { message?: string };
+    const parsed = parseJson<{ message?: string }>(body);
     return parsed.message;
   } catch {
     return body.length > 200 ? `${body.slice(0, 200)}…` : body;
@@ -93,7 +94,7 @@ export async function githubRequest<T>(
     return {} as T;
   }
 
-  return JSON.parse(response.text) as T;
+  return parseJson<T>(response.text);
 }
 
 export async function githubRequestWithRetry<T>(
@@ -109,7 +110,7 @@ export async function githubRequestWithRetry<T>(
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       return await githubRequest<T>(token, method, apiPath, body);
-    } catch (error) {
+    } catch (error: unknown) {
       const shouldRetry =
         error instanceof GitHubApiError &&
         retryStatuses.includes(error.status) &&
@@ -131,7 +132,7 @@ export async function githubFormRequest<T>(
   fields: Record<string, string>,
 ): Promise<T> {
   const body = new URLSearchParams(fields).toString();
-  const response = await requestUrl({
+  const response: RequestUrlResponse = await requestUrl({
     url,
     method: 'POST',
     headers: {
@@ -150,7 +151,7 @@ export async function githubFormRequest<T>(
     );
   }
 
-  return JSON.parse(response.text) as T;
+  return parseJson<T>(response.text);
 }
 
 export interface GitHubUser {

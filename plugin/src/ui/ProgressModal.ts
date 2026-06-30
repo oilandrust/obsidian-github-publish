@@ -59,7 +59,7 @@ export class ProgressModal extends Modal {
       async () => {
         throw new Error('ProgressModal preview does not run publish.');
       },
-      async () => {},
+      () => Promise.resolve(),
       {
         mode: options.mode,
         previewState: {
@@ -128,7 +128,7 @@ export class ProgressModal extends Modal {
       if (this.runningInBackground) {
         new Notice(`GitHub Publish: site updated — ${result.liveUrl}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.state = {
         phase: 'error',
         message: 'Publish failed',

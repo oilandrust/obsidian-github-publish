@@ -1,6 +1,6 @@
 import { App, Modal, Notice, Setting, TFolder } from 'obsidian';
 import { listUserRepos } from '../github/repos';
-import GitHubPublishPlugin from '../../main';
+import { GitHubPublishHost } from '../pluginHost';
 import { SetupConfig } from '../settings';
 import { countFilesInFolder } from '../publish/scanVault';
 import { saveSetupConfig, startPublish } from '../publish/startPublish';
@@ -19,7 +19,7 @@ export class SetupModal extends Modal {
 
   constructor(
     app: App,
-    private readonly plugin: GitHubPublishPlugin,
+    private readonly plugin: GitHubPublishHost,
   ) {
     super(app);
   }
@@ -161,7 +161,7 @@ export class SetupModal extends Modal {
             this.repoName = value;
           });
         });
-    } catch (error) {
+    } catch (error: unknown) {
       container.createEl('p', {
         text: error instanceof Error ? error.message : String(error),
       });
@@ -271,7 +271,7 @@ export class SetupModal extends Modal {
     }
   }
 
-  private async publish(): Promise<void> {
+  private publish(): void {
     const token = this.plugin.settings.accessToken;
     const username = this.plugin.settings.githubUsername;
     if (!token || !username) return;

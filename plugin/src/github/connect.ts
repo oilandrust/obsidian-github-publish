@@ -1,11 +1,11 @@
 import { Notice } from 'obsidian';
-import GitHubPublishPlugin from '../../main';
+import { GitHubPublishHost } from '../pluginHost';
 import { GitHubUser } from './client';
 import { pollAccessToken, requestDeviceCode } from './auth';
 import { GITHUB_OAUTH_CLIENT_ID } from './oauthConfig';
 
 export async function connectGitHub(
-  plugin: GitHubPublishPlugin,
+  plugin: GitHubPublishHost,
   callbacks?: {
     onUserCode?: (userCode: string, verificationUri: string) => void;
     onPending?: () => void;

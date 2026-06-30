@@ -1,5 +1,5 @@
 import { Notice } from 'obsidian';
-import GitHubPublishPlugin from '../../main';
+import { GitHubPublishHost } from '../pluginHost';
 import { log } from '../log';
 import { PublishedSite, SetupConfig } from '../settings';
 import { resolveQuartzCommitSha } from '../quartz/versions';
@@ -15,16 +15,16 @@ import { runInitialPublish } from './initialPublish';
 import { detectUnpublishedChanges, runPublishChanges } from './publishChanges';
 import { ProgressModal } from '../ui/ProgressModal';
 
-export function saveSetupConfig(plugin: GitHubPublishPlugin, config: SetupConfig): void {
+export function saveSetupConfig(plugin: GitHubPublishHost, config: SetupConfig): void {
   plugin.settings.savedSetup = config;
   void plugin.saveSettings();
 }
 
-export function getSavedSetup(plugin: GitHubPublishPlugin): SetupConfig | null {
+export function getSavedSetup(plugin: GitHubPublishHost): SetupConfig | null {
   return plugin.settings.savedSetup;
 }
 
-export function startPublish(plugin: GitHubPublishPlugin, config?: SetupConfig): void {
+export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): void {
   const token = plugin.settings.accessToken;
   const username = plugin.settings.githubUsername;
 
@@ -77,7 +77,7 @@ export function startPublish(plugin: GitHubPublishPlugin, config?: SetupConfig):
   progress.open();
 }
 
-export function startPublishChanges(plugin: GitHubPublishPlugin, site: PublishedSite): void {
+export function startPublishChanges(plugin: GitHubPublishHost, site: PublishedSite): void {
   log('Publish changes requested', { siteId: site.id });
   const token = plugin.settings.accessToken;
 
@@ -124,7 +124,7 @@ export function startPublishChanges(plugin: GitHubPublishPlugin, site: Published
 }
 
 export async function hasUnpublishedChanges(
-  plugin: GitHubPublishPlugin,
+  plugin: GitHubPublishHost,
   site: PublishedSite,
 ): Promise<boolean> {
   if (!isPublishedSite(site) || !site.contentFolder) {
@@ -136,13 +136,13 @@ export async function hasUnpublishedChanges(
   return countDiffChanges(result.diff) > 0;
 }
 
-export function getPublishableSites(plugin: GitHubPublishPlugin): PublishedSite[] {
+export function getPublishableSites(plugin: GitHubPublishHost): PublishedSite[] {
   return plugin.settings.publishedSites.filter(isPublishedSite);
 }
 
 function withTemplateSettings(
   config: SetupConfig | null,
-  plugin: GitHubPublishPlugin,
+  plugin: GitHubPublishHost,
 ): SetupConfig | null {
   if (!config) return null;
 

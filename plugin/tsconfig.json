@@ -11,9 +11,10 @@
     "importHelpers": true,
     "isolatedModules": true,
     "strictNullChecks": true,
+    "useUnknownInCatchVariables": true,
     "skipLibCheck": true,
     "lib": ["DOM", "ES2021"]
   },
   "include": ["**/*.ts"],
-  "exclude": ["assets/**", "node_modules"]
+  "exclude": ["assets/toolchain-quartz/**", "assets/toolchain-inhouse/template/**", "node_modules"]
 }

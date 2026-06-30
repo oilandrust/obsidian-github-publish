@@ -66,7 +66,7 @@ export async function resolveRepository(
       repoName: created.name,
       created: true,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof GitHubApiError && error.status === 422) {
       log(`Repository ${username}/${repoName} already exists — continuing publish`);
       const existing = await getRepo(token, username, repoName);
@@ -92,7 +92,7 @@ export async function isRepoEmpty(token: string, owner: string, repo: string): P
   try {
     await githubRequest(token, 'GET', `/repos/${owner}/${repo}/git/ref/heads/main`);
     return false;
-  } catch (error) {
+  } catch (error: unknown) {
     if (isMissingBranchRefError(error)) {
       return true;
     }

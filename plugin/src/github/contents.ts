@@ -142,7 +142,7 @@ export async function getFileContentsSha(
       `/repos/${owner}/${repo}/contents/${encodeRepoPath(path)}`,
     );
     return response.sha;
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof GitHubApiError && error.status === 404) {
       return undefined;
     }

@@ -58,8 +58,10 @@ export default class GitHubPublishPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const raw = await this.loadData();
-    this.settings = migratePluginSettings({ ...DEFAULT_SETTINGS, ...raw });
+    const raw: unknown = await this.loadData();
+    const stored =
+      raw !== null && typeof raw === 'object' ? (raw as Partial<PluginSettings>) : {};
+    this.settings = migratePluginSettings({ ...DEFAULT_SETTINGS, ...stored });
   }
 
   async saveSettings(): Promise<void> {

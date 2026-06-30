@@ -24,8 +24,10 @@ function FolderItem({ node, depth }: { node: Extract<TreeNode, { type: 'folder' 
       <button
         type="button"
         className="tree-folder-toggle"
-        style={{ paddingLeft: `${depth * 12 + 8}px` }}
-        onClick={() => setOpen(!open)}
+        style={{ paddingLeft: `${String(depth * 12 + 8)}px` }}
+        onClick={() => {
+          setOpen(!open);
+        }}
         aria-expanded={open}
       >
         <span className="tree-chevron">{open ? '▾' : '▸'}</span>
@@ -42,7 +44,7 @@ export function FileTree({ tree, depth = 0 }: FileTreeProps) {
     <ul className="file-tree" role="tree">
       {tree.map((node) => {
         if (node.type === 'folder') {
-          return <FolderItem key={`folder-${node.name}-${depth}`} node={node} depth={depth} />;
+          return <FolderItem key={`folder-${node.name}-${String(depth)}`} node={node} depth={depth} />;
         }
 
         return (
@@ -50,7 +52,7 @@ export function FileTree({ tree, depth = 0 }: FileTreeProps) {
             <NavLink
               to={`/view/${node.id}`}
               className={({ isActive }) => `tree-link${isActive ? ' active' : ''}`}
-              style={{ paddingLeft: `${depth * 12 + 8}px` }}
+              style={{ paddingLeft: `${String(depth * 12 + 8)}px` }}
             >
               <span className="tree-icon">{nodeIcon(node)}</span>
               <span className="tree-label">{node.title}</span>

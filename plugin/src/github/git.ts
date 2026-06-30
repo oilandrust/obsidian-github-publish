@@ -63,7 +63,7 @@ export async function ensureRepositoryReadyForGit(
       });
       log(`Repository ${owner}/${repo} is ready for Git upload`);
       return;
-    } catch (error) {
+    } catch (error: unknown) {
       if (!(error instanceof GitHubApiError) || error.status !== 409) {
         throw error;
       }
@@ -104,7 +104,7 @@ async function initializeRepository(token: string, owner: string, repo: string):
       new Uint8Array(),
       'Initialize repository for GitHub Publish',
     );
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof GitHubApiError && error.status === 422) {
       const repoInfo = await getRepo(token, owner, repo);
       const branch = repoInfo.default_branch || 'main';
@@ -277,7 +277,7 @@ export async function createContentUpdateCommit(
 
   try {
     return await attemptCommit();
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof GitHubApiError && error.status === 409) {
       logWarn('Content update commit conflict (409), retrying with fresh parent');
       step = 0;
@@ -313,7 +313,7 @@ async function getBranchRef(
       'GET',
       `/repos/${owner}/${repo}/git/ref/heads/${branch}`,
     );
-  } catch (error) {
+  } catch (error: unknown) {
     if (isMissingBranchRefError(error)) {
       return null;
     }
@@ -385,7 +385,7 @@ async function createCommitAndUpdateBranch(
       { ref: `refs/heads/${branch}`, sha: commit.sha },
       { retryStatuses: GIT_RETRY_STATUSES },
     );
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof GitHubApiError && [404, 409, 422].includes(error.status)) {
       logWarn(`POST ref failed (${error.status}), falling back to branch update`);
       await updateBranchRef(
@@ -434,7 +434,7 @@ async function branchExists(
   try {
     await githubRequest(token, 'GET', `/repos/${owner}/${repo}/git/ref/heads/${branch}`);
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     if (isMissingBranchRefError(error)) {
       return false;
     }

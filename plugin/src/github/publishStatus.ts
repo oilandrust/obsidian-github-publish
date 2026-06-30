@@ -1,4 +1,4 @@
-import { requestUrl } from 'obsidian';
+import { requestUrl, RequestUrlResponse } from 'obsidian';
 import { githubRequest, GitHubApiError } from './client';
 import { log } from '../log';
 
@@ -39,7 +39,7 @@ async function checkRepository(
       return { status: 'live', detail: 'Repository reachable' };
     }
 
-    const response = await requestUrl({
+    const response: RequestUrlResponse = await requestUrl({
       url: `https://api.github.com/repos/${owner}/${repo}`,
       method: 'GET',
       headers: {
@@ -60,7 +60,7 @@ async function checkRepository(
       detail: `Unexpected response (${response.status})`,
       httpStatus: response.status,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof GitHubApiError && error.status === 404) {
       return { status: 'unreachable', detail: 'Repository not found', httpStatus: 404 };
     }
@@ -74,7 +74,7 @@ async function checkRepository(
 
 async function checkLiveSite(liveUrl: string): Promise<StatusCheck> {
   try {
-    const response = await requestUrl({
+    const response: RequestUrlResponse = await requestUrl({
       url: liveUrl,
       method: 'GET',
       throw: false,
@@ -95,7 +95,7 @@ async function checkLiveSite(liveUrl: string): Promise<StatusCheck> {
       detail: `HTTP ${response.status}`,
       httpStatus: response.status,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     log('Live site status check failed', error);
     return {
       status: 'error',

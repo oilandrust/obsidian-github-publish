@@ -2,16 +2,11 @@ import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { ContentView } from './components/ContentView';
 import { Layout } from './components/Layout';
-import {
-  findFirstNavigableNode,
-  findNodeById,
-  type AssetNode,
-  type NoteNode,
-  type SiteData,
-} from './types';
+import { findFirstNavigableNode, findNodeById, type SiteData } from './types';
 
 function Viewer({ siteData }: { siteData: SiteData }) {
-  const { id } = useParams<{ id: string }>();
+  const { id: routeId } = useParams();
+  const id = typeof routeId === 'string' ? routeId : undefined;
   const node = id ? findNodeById(siteData.tree, id) : null;
 
   if (!node || (node.type !== 'note' && node.type !== 'asset')) {
@@ -26,7 +21,7 @@ function Viewer({ siteData }: { siteData: SiteData }) {
     );
   }
 
-  return <ContentView node={node as NoteNode | AssetNode} />;
+  return <ContentView node={node} />;
 }
 
 export default function App() {
@@ -34,16 +29,19 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/site-data.json`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Failed to load site data (${res.status})`);
-        return res.json();
-      })
-      .then((data: SiteData) => {
+    void (async () => {
+      try {
+        const res = await fetch(`${import.meta.env.BASE_URL}data/site-data.json`);
+        if (!res.ok) {
+          throw new Error(`Failed to load site data (${String(res.status)})`);
+        }
+        const data = (await res.json()) as SiteData;
         document.title = data.siteName;
         setSiteData(data);
-      })
-      .catch((err: Error) => setError(err.message));
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    })();
   }, []);
 
   if (error) {

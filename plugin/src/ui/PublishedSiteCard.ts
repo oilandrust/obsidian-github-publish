@@ -9,12 +9,12 @@ import {
   resolveQuartzCommitSha,
 } from '../quartz/versions';
 import { showAdvancedSettings } from '../buildFlags';
-import GitHubPublishPlugin from '../../main';
+import { GitHubPublishHost } from '../pluginHost';
 
 export class PublishedSiteCard {
   constructor(
     private readonly app: App,
-    private readonly plugin: GitHubPublishPlugin,
+    private readonly plugin: GitHubPublishHost,
     private readonly site: PublishedSite,
     private readonly isStale: () => boolean,
     private readonly onPublishChanges: (site: PublishedSite) => void,

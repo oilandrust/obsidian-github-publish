@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { resolveQuartzCommitSha } from '../quartz/versions';
 import { RepoFile, SetupConfig, TemplateEngine } from '../settings';
+import { parseJson } from '../utils/json';
 
 interface ToolchainManifest {
   files?: string[];
@@ -48,7 +49,7 @@ function loadManifestFiles(toolchainDir: string): string[] {
     );
   }
 
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as ToolchainManifest | string[];
+  const manifest = parseJson<ToolchainManifest | string[]>(fs.readFileSync(manifestPath, 'utf8'));
   return Array.isArray(manifest) ? manifest : manifest.files ?? [];
 }
 
