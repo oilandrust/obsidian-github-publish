@@ -8,12 +8,6 @@ The plugin uses [Quartz](https://quartz.jzhao.xyz/) as a rendering engine and Gi
 - Select the folder you want to publish, and the name of the site
 - Profit!
 
-## Keep track of changes and publish your updated notes
-The plugin keeps track of edited notes, lets you know when there are changes, and lets you publish the latest notes with a click.
-
-## User Friendly UX
-The plugin is designed to make the process of publishing as smooth as possible and to give you the info you need to know what is going on. Just what you would expect from a modern usable software tool.
-
 ## Live Demo
 
 Checkout the Wiki of the project that is published with the Quartz template.
@@ -21,6 +15,12 @@ Checkout the Wiki of the project that is published with the Quartz template.
 [Example Wiki](https://oilandrust.github.io/githubpublish-wiki/)
 
 ![Published site example (light theme)](Wiki/publish-example-light.png)
+
+## Keep track of changes and publish your updated notes
+The plugin keeps track of edited notes, lets you know when there are changes, and lets you publish the latest notes with a click.
+
+## User Friendly UX
+The plugin is designed to make the process of publishing as smooth as possible and to give you the info you need to know what is going on. Just what you would expect from a modern usable software tool.
 
 ## Features
 
