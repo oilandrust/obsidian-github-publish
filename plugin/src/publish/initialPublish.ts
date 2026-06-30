@@ -1,9 +1,9 @@
-import { App, normalizePath } from 'obsidian';
-import { FileSystemAdapter } from 'obsidian';
+import { App } from 'obsidian';
 import { enableGitHubPages } from '../github/pages';
 import { createInitialCommit, ensureRepositoryReadyForGit } from '../github/git';
 import { resolveRepository } from '../github/repos';
 import { ProgressState, RepoFile, SetupConfig } from '../settings';
+import { getVaultBasePath, joinNormalizedPath } from '../utils/obsidianPath';
 import { loadPublishToolchainFiles, publishBundleContextFromConfig } from './bundleToolchain';
 import { buildContentManifest } from './diffVault';
 import { ensureQuartzHomePage } from './ensureQuartzHomePage';
@@ -117,17 +117,7 @@ function sortUploadFiles(files: RepoFile[]): RepoFile[] {
 }
 
 export function getPluginDir(app: App, pluginId: string): string {
-  const adapter = app.vault.adapter;
-  if (!(adapter instanceof FileSystemAdapter)) {
-    throw new Error('GitHub Publish requires the desktop app.');
-  }
-  const basePath: string = adapter.getBasePath();
+  const basePath = getVaultBasePath(app);
   const configDir: string = app.vault.configDir;
-  const joined = pathJoin(basePath, configDir, 'plugins', pluginId);
-  const normalized: unknown = normalizePath(joined);
-  return normalized as string;
-}
-
-function pathJoin(...parts: string[]): string {
-  return parts.join('/').replace(/\\/g, '/');
+  return joinNormalizedPath(basePath, configDir, 'plugins', pluginId);
 }

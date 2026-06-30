@@ -1,8 +1,9 @@
-import { Notice } from 'obsidian';
 import { GitHubPublishHost } from '../pluginHost';
 import { GitHubUser } from './client';
 import { pollAccessToken, requestDeviceCode } from './auth';
 import { GITHUB_OAUTH_CLIENT_ID } from './oauthConfig';
+import { openUrl } from '../ui/browser';
+import { showNotice } from '../ui/notices';
 
 export async function connectGitHub(
   plugin: GitHubPublishHost,
@@ -13,7 +14,7 @@ export async function connectGitHub(
 ): Promise<GitHubUser> {
   const device = await requestDeviceCode(GITHUB_OAUTH_CLIENT_ID);
   callbacks?.onUserCode?.(device.user_code, device.verification_uri);
-  window.open(device.verification_uri, '_blank');
+  openUrl(device.verification_uri);
 
   const token = await pollAccessToken(
     GITHUB_OAUTH_CLIENT_ID,
@@ -21,7 +22,7 @@ export async function connectGitHub(
     device.interval,
     () => {
       callbacks?.onPending?.();
-      new Notice('Waiting for GitHub authorization…');
+      showNotice('Waiting for GitHub authorization…');
     },
   );
 

@@ -1,8 +1,8 @@
-import * as path from 'path';
 import { resolveQuartzCommitSha } from '../quartz/versions';
 import { RepoFile, SetupConfig, TemplateEngine } from '../settings';
 import { fileExists, readBytesFile, readTextFile } from '../utils/fs';
 import { parseJson } from '../utils/json';
+import { pathExtname, pathJoin } from '../utils/path';
 
 interface ToolchainManifest {
   files?: string[];
@@ -33,7 +33,7 @@ function isTextFile(relativePath: string): boolean {
   if (relativePath.endsWith('.template')) {
     return true;
   }
-  const ext: string = path.extname(relativePath);
+  const ext = pathExtname(relativePath);
   return TEXT_EXTENSIONS.has(ext);
 }
 
@@ -42,7 +42,7 @@ function toolchainDirName(engine: TemplateEngine): string {
 }
 
 function loadManifestFiles(toolchainDir: string): string[] {
-  const manifestPath: string = path.join(toolchainDir, 'manifest.json');
+  const manifestPath = pathJoin(toolchainDir, 'manifest.json');
   if (!fileExists(manifestPath)) {
     throw new Error(
       `Toolchain not found at ${toolchainDir}. Run npm run sync:toolchain in the obsidian-github-publish repo.`,
@@ -54,8 +54,8 @@ function loadManifestFiles(toolchainDir: string): string[] {
 }
 
 function readRepoFile(toolchainDir: string, relativePath: string): RepoFile {
-  const absolute: string = path.join(toolchainDir, relativePath);
-  const content: Buffer = readBytesFile(absolute);
+  const absolute = pathJoin(toolchainDir, relativePath);
+  const content = readBytesFile(absolute);
   return {
     path: relativePath,
     content,
@@ -102,7 +102,7 @@ function loadInhouseToolchain(toolchainDir: string, context: PublishBundleContex
     files.push(readRepoFile(toolchainDir, relativePath));
   }
 
-  const packageTemplate = readTextFile(path.join(toolchainDir, 'package.json.template'));
+  const packageTemplate = readTextFile(pathJoin(toolchainDir, 'package.json.template'));
   pushTemplatedFile(files, 'package.json', packageTemplate, context);
   return files;
 }
@@ -113,7 +113,7 @@ function loadQuartzToolchain(toolchainDir: string, context: PublishBundleContext
 
   for (const relativePath of filePaths) {
     if (relativePath.endsWith('.template')) {
-      const raw = readTextFile(path.join(toolchainDir, relativePath));
+      const raw = readTextFile(pathJoin(toolchainDir, relativePath));
       pushTemplatedFile(files, relativePath, raw, context);
       continue;
     }
@@ -139,7 +139,7 @@ export function loadPublishToolchainFiles(
   context: PublishBundleContext,
 ): RepoFile[] {
   const engine = context.templateEngine;
-  const toolchainDir: string = path.join(pluginDir, 'assets', toolchainDirName(engine));
+  const toolchainDir = pathJoin(pluginDir, 'assets', toolchainDirName(engine));
 
   if (engine === 'quartz') {
     return loadQuartzToolchain(toolchainDir, context);

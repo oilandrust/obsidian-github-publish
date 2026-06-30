@@ -1,13 +1,13 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+import { StrictMode, createRoot, h } from './react';
+import { HashRouter } from './router';
 import App from './App';
 import './styles/obsidian.css';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <HashRouter>
-      <App />
-    </HashRouter>
-  </StrictMode>,
+const rootEl = document.getElementById('root');
+if (!rootEl) {
+  throw new Error('Missing #root element');
+}
+
+createRoot(rootEl).render(
+  h(StrictMode, null, h(HashRouter, null, h(App, null))),
 );

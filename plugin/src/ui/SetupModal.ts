@@ -1,11 +1,16 @@
-import { App, Modal, Notice, Setting, TFolder } from 'obsidian';
+import { App, Modal, TFolder } from 'obsidian';
 import { listUserRepos } from '../github/repos';
 import { GitHubPublishHost } from '../pluginHost';
 import { SetupConfig } from '../settings';
 import { countFilesInFolder } from '../publish/scanVault';
 import { saveSetupConfig, startPublish } from '../publish/startPublish';
+import { getOptionalVaultFolder } from '../utils/vault';
 import { FolderTree } from './FolderTree';
 import { childDiv, childEl } from './dom';
+import { elAddClass, elEmpty, elSetAttr, focusElement } from './element';
+import { closeModal } from './modalApi';
+import { showNotice } from './notices';
+import { addSetting } from './settingsUi';
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -27,8 +32,8 @@ export class SetupModal extends Modal {
 
   onOpen(): void {
     if (!this.plugin.settings.accessToken) {
-      new Notice('Connect to GitHub in plugin settings first.');
-      this.close();
+      showNotice('Connect to GitHub in plugin settings first.');
+      closeModal(this);
       return;
     }
 
@@ -42,8 +47,8 @@ export class SetupModal extends Modal {
 
   private render(): void {
     const { contentEl } = this;
-    contentEl.empty();
-    contentEl.addClass('github-publish-modal');
+    elEmpty(contentEl);
+    elAddClass(contentEl, 'github-publish-modal');
 
     childEl(contentEl, 'h2', { text: `GitHub Publish — Setup (step ${String(this.step)}/4)` });
 
@@ -70,13 +75,13 @@ export class SetupModal extends Modal {
       text: 'Choose a name for your published site. This appears in the browser tab and site header.',
     });
 
-    new Setting(container)
+    addSetting(container)
       .setName('Site name')
       .addText((text) => {
         text.setValue(this.siteName).onChange((value: string) => {
           this.siteName = value;
         });
-        text.inputEl.focus();
+        focusElement(text.inputEl);
       });
   }
 
@@ -114,7 +119,7 @@ export class SetupModal extends Modal {
   private renderRepoStep(container: HTMLElement): void {
     childEl(container, 'p', { text: 'Create a new repository or use an existing empty one.' });
 
-    new Setting(container)
+    addSetting(container)
       .setName('Repository')
       .addDropdown((dropdown) => {
         dropdown
@@ -128,7 +133,7 @@ export class SetupModal extends Modal {
       });
 
     if (this.repoMode === 'create') {
-      new Setting(container)
+      addSetting(container)
         .setName('New repository name')
         .setDesc('Lowercase letters, numbers, and hyphens. Will be created as public.')
         .addText((text) => {
@@ -151,7 +156,7 @@ export class SetupModal extends Modal {
 
     try {
       const repos = await listUserRepos(token);
-      new Setting(container)
+      addSetting(container)
         .setName('Existing repository')
         .addDropdown((dropdown) => {
           dropdown.addOption('', 'Select a repository…');
@@ -235,33 +240,30 @@ export class SetupModal extends Modal {
     switch (this.step) {
       case 1:
         if (!this.siteName.trim()) {
-          new Notice('Enter a site name.');
+          showNotice('Enter a site name.');
           return false;
         }
         return true;
       case 2: {
         const folderPath = this.contentFolder;
         if (folderPath !== '' && !folderPath.trim()) {
-          new Notice('Enter a vault folder path.');
+          showNotice('Enter a vault folder path.');
           return false;
         }
-        const folder =
-          folderPath === ''
-            ? this.app.vault.getRoot()
-            : this.app.vault.getAbstractFileByPath(folderPath);
+        const folder = getOptionalVaultFolder(this.app.vault, folderPath);
         if (!(folder instanceof TFolder)) {
-          new Notice('Folder not found in vault.');
+          showNotice('Folder not found in vault.');
           return false;
         }
         return true;
       }
       case 3:
         if (!this.repoName.trim()) {
-          new Notice('Enter or select a repository name.');
+          showNotice('Enter or select a repository name.');
           return false;
         }
         if (this.repoMode === 'create' && !/^[a-z0-9][a-z0-9-]*$/.test(this.repoName)) {
-          new Notice('Repository name must be lowercase alphanumeric with hyphens.');
+          showNotice('Repository name must be lowercase alphanumeric with hyphens.');
           return false;
         }
         return true;
@@ -287,7 +289,7 @@ export class SetupModal extends Modal {
     };
 
     saveSetupConfig(this.plugin, config);
-    this.close();
+    closeModal(this);
     startPublish(this.plugin, config);
   }
 }

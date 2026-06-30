@@ -1,15 +1,8 @@
-import { useEffect, useState, type ComponentType, type ReactElement } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { useEffect, useState, h, type ReactElement } from './react';
 import { ContentView } from './components/ContentView';
 import { Layout } from './components/Layout';
+import { Navigate, Route, Routes, useAppLocation } from './router';
 import { findFirstNavigableNode, findNodeById, type SiteData } from './types';
-import { h } from './ui';
-
-const Nav = Navigate as ComponentType<Record<string, unknown>>;
-const AppRoute = Route as ComponentType<Record<string, unknown>>;
-const AppRoutes = Routes as ComponentType<Record<string, unknown>>;
-const AppLayout = Layout as ComponentType<Record<string, unknown>>;
-const AppContentView = ContentView as ComponentType<Record<string, unknown>>;
 
 function viewIdFromPath(pathname: string): string | undefined {
   const match = /\/view\/([^/?#]+)/.exec(pathname);
@@ -17,22 +10,20 @@ function viewIdFromPath(pathname: string): string | undefined {
 }
 
 function Viewer({ siteData }: { siteData: SiteData }): ReactElement {
-  const pathname: string = useLocation().pathname;
+  const { pathname } = useAppLocation();
   const id = viewIdFromPath(pathname);
   const node = id ? findNodeById(siteData.tree, id) : null;
 
   if (!node || (node.type !== 'note' && node.type !== 'asset')) {
     const first = findFirstNavigableNode(siteData.tree);
     if (first) {
-      return h(Nav, { to: `/view/${first.id}`, replace: true });
+      return h(Navigate, { to: `/view/${first.id}`, replace: true });
     }
     return h('div', { className: 'content-empty' }, h('p', null, 'No content to display.'));
   }
 
-  return h(AppContentView, { node });
+  return h(ContentView, { node });
 }
-
-const ViewerComp = Viewer as ComponentType<Record<string, unknown>>;
 
 async function loadSiteData(baseUrl: string): Promise<SiteData> {
   const res = await fetch(`${baseUrl}data/site-data.json`);
@@ -72,17 +63,15 @@ export default function App(): ReactElement {
     return h('div', { className: 'app-loading' }, 'Loading…');
   }
 
-  const data: SiteData = siteData;
-
   return h(
-    AppRoutes,
+    Routes,
     null,
     h(
-      AppRoute,
-      { path: '/', element: h(AppLayout, { siteData: data }) },
-      h(AppRoute, { index: true, element: h(Nav, { to: '/view', replace: true }) }),
-      h(AppRoute, { path: 'view', element: h(ViewerComp, { siteData: data }) }),
-      h(AppRoute, { path: 'view/:id', element: h(ViewerComp, { siteData: data }) }),
+      Route,
+      { path: '/', element: h(Layout, { siteData }) },
+      h(Route, { index: true, element: h(Navigate, { to: '/view', replace: true }) }),
+      h(Route, { path: 'view', element: h(Viewer, { siteData }) }),
+      h(Route, { path: 'view/:id', element: h(Viewer, { siteData }) }),
     ),
   );
 }

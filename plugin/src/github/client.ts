@@ -1,7 +1,6 @@
 import { fetchUrl } from '../utils/request';
 import { log, logWarn } from '../log';
 import { parseJson } from '../utils/json';
-import { fetchUrl } from '../utils/request';
 
 const GITHUB_API = 'https://api.github.com';
 

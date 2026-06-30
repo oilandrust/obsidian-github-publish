@@ -1,5 +1,7 @@
 import { App, TFolder } from 'obsidian';
 import { childDiv, childEl, childSpan } from './dom';
+import { elEmpty } from './element';
+import { getVaultRootFolder, listSubfoldersSorted } from '../utils/vault';
 
 export interface FolderTreeOptions {
   selectedPath: string;
@@ -16,13 +18,11 @@ export class FolderTree {
   ) {}
 
   render(): void {
-    this.container.empty();
+    elEmpty(this.container);
     const tree = childDiv(this.container, { cls: 'github-publish-folder-tree' });
 
-    const root = this.app.vault.getRoot();
-    const topFolders = root.children
-      .filter((child): child is TFolder => child instanceof TFolder)
-      .sort((a, b): number => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+    const root = getVaultRootFolder(this.app.vault);
+    const topFolders = listSubfoldersSorted(root);
 
     for (const folder of topFolders) {
       this.renderFolder(tree, folder, 0);
@@ -37,7 +37,7 @@ export class FolderTree {
   }
 
   private renderFolder(parent: HTMLElement, folder: TFolder, depth: number): void {
-    const subfolders = folder.children.filter((child): child is TFolder => child instanceof TFolder);
+    const subfolders = listSubfoldersSorted(folder);
     const hasSubfolders = subfolders.length > 0;
     const isExpanded = this.options.expandedPaths.has(folder.path);
     const isSelected = this.options.selectedPath === folder.path;
@@ -71,9 +71,7 @@ export class FolderTree {
 
     if (hasSubfolders && isExpanded) {
       const children = childDiv(parent, { cls: 'github-publish-folder-children' });
-      for (const child of subfolders.sort((a, b): number =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-      )) {
+      for (const child of subfolders) {
         this.renderFolder(children, child, depth + 1);
       }
     }

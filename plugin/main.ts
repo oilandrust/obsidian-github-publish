@@ -1,4 +1,4 @@
-import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab } from 'obsidian';
 import { fetchGitHubUser } from './src/github/auth';
 import { connectGitHub } from './src/github/connect';
 import {
@@ -24,6 +24,16 @@ import {
 } from './src/quartz/versions';
 import { showAdvancedSettings } from './src/buildFlags';
 import { childDiv, childEl } from './src/ui/dom';
+import { elEmpty } from './src/ui/element';
+import { openModal } from './src/ui/modalApi';
+import { showNotice } from './src/ui/notices';
+import {
+  pluginAddCommand,
+  pluginAddRibbonIcon,
+  pluginAddSettingTab,
+  savePluginData,
+} from './src/ui/pluginApi';
+import { addSetting } from './src/ui/settingsUi';
 import { loadPluginSettingsData } from './src/utils/pluginData';
 
 export default class GitHubPublishPlugin extends Plugin {
@@ -34,27 +44,33 @@ export default class GitHubPublishPlugin extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings();
     this.settingTab = new GitHubPublishSettingTab(this.app, this);
-    this.addSettingTab(this.settingTab);
+    pluginAddSettingTab(this, this.settingTab);
 
-    this.addCommand({
+    pluginAddCommand(this, {
       id: 'setup-site',
       name: 'Set up site',
-      callback: () => this.openSetupWizard(),
+      callback: () => {
+        this.openSetupWizard();
+      },
     });
 
-    this.addCommand({
+    pluginAddCommand(this, {
       id: 'continue-publish',
       name: 'Continue publish',
-      callback: () => startPublish(this),
+      callback: () => {
+        startPublish(this);
+      },
     });
 
-    this.addCommand({
+    pluginAddCommand(this, {
       id: 'publish-changes',
       name: 'Publish changes',
-      callback: () => this.openPublishChangesPicker(),
+      callback: () => {
+        this.openPublishChangesPicker();
+      },
     });
 
-    this.addRibbonIcon('globe', 'GitHub Publish setup', () => {
+    pluginAddRibbonIcon(this, 'globe', 'GitHub Publish setup', () => {
       this.openSetupWizard();
     });
   }
@@ -65,7 +81,7 @@ export default class GitHubPublishPlugin extends Plugin {
   }
 
   async saveSettings(): Promise<void> {
-    await this.saveData(this.settings);
+    await savePluginData(this, this.settings);
   }
 
   getPluginDir(): string {
@@ -100,16 +116,16 @@ export default class GitHubPublishPlugin extends Plugin {
 
   openSetupWizard(): void {
     if (!this.settings.accessToken) {
-      new Notice('Connect to GitHub in plugin settings first.');
+      showNotice('Connect to GitHub in plugin settings first.');
       return;
     }
-    new SetupModal(this.app, this).open();
+    openModal(new SetupModal(this.app, this));
   }
 
   openPublishChangesPicker(): void {
     const sites = getPublishableSites(this);
     if (sites.length === 0) {
-      new Notice('Complete initial publish before publishing changes.');
+      showNotice('Complete initial publish before publishing changes.');
       return;
     }
 
@@ -119,9 +135,11 @@ export default class GitHubPublishPlugin extends Plugin {
       return;
     }
 
-    new SitePickerModal(this.app, sites, (site) => {
-      startPublishChanges(this, site);
-    }).open();
+    openModal(
+      new SitePickerModal(this.app, sites, (site) => {
+        startPublishChanges(this, site);
+      }),
+    );
   }
 }
 
@@ -139,7 +157,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     this.statusCheckId++;
     const checkId = this.statusCheckId;
     const isStale = () => checkId !== this.statusCheckId;
-    containerEl.empty();
+    elEmpty(containerEl);
 
     const connected = Boolean(this.plugin.settings.accessToken);
 
@@ -149,7 +167,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       });
     }
 
-    new Setting(containerEl)
+    addSetting(containerEl)
       .setName('GitHub account')
       .setDesc(this.plugin.settings.githubUsername ?? 'Not connected')
       .addButton((btn) => {
@@ -175,13 +193,13 @@ class GitHubPublishSettingTab extends PluginSettingTab {
               },
             })
               .then((user) => {
-                new Notice(`Connected as ${user.login}`);
+                showNotice(`Connected as ${user.login}`);
                 this.connecting = false;
                 this.deviceUserCode = null;
                 this.display();
               })
               .catch((error: unknown) => {
-                new Notice(error instanceof Error ? error.message : String(error));
+                showNotice(error instanceof Error ? error.message : String(error));
                 this.connecting = false;
                 this.deviceUserCode = null;
                 this.display();
@@ -207,9 +225,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       this.renderAdvancedSettings(containerEl);
     }
 
-    //this.renderDevelopmentSettings(containerEl);
-
-    new Setting(containerEl)
+    addSetting(containerEl)
       .setName('Publish new site')
       .setDesc('Choose a vault folder and GitHub repository to publish.')
       .addButton((btn) => {
@@ -226,7 +242,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
 
     const { publishedSites } = this.plugin.settings;
     if (publishedSites.length > 0) {
-      new Setting(containerEl).setName('Published sites').setHeading();
+      addSetting(containerEl).setName('Published sites').setHeading();
       const sitesContainer = childDiv(containerEl, { cls: 'github-publish-sites-list' });
       for (const site of publishedSites) {
         new PublishedSiteCard(
@@ -246,9 +262,9 @@ class GitHubPublishSettingTab extends PluginSettingTab {
   }
 
   private renderAdvancedSettings(containerEl: HTMLElement): void {
-    new Setting(containerEl).setName('Advanced').setHeading();
+    addSetting(containerEl).setName('Advanced').setHeading();
 
-    new Setting(containerEl)
+    addSetting(containerEl)
       .setName('Template engine')
       .setDesc('Quartz is recommended for Obsidian features like wikilinks, graph, and backlinks.')
       .addDropdown((dropdown) => {
@@ -268,7 +284,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       const isKnownSha = TESTED_QUARTZ_VERSIONS.some((version) => version.sha === activeSha);
       const dropdownValue = isKnownSha ? activeSha : 'custom';
 
-      new Setting(containerEl)
+      addSetting(containerEl)
         .setName('Quartz version')
         .setDesc('Pinned Quartz commit used when publishing a new site.')
         .addDropdown((dropdown) => {
@@ -280,8 +296,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
             if (value === 'custom') {
               this.plugin.settings.quartzCommitSha = isKnownSha ? '' : activeSha;
             } else {
-              const sha: string = value;
-              this.plugin.settings.quartzCommitSha = sha;
+              this.plugin.settings.quartzCommitSha = value;
             }
             await this.plugin.saveSettings();
             this.display();
@@ -289,7 +304,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
         });
 
       if (dropdownValue === 'custom') {
-        new Setting(containerEl)
+        addSetting(containerEl)
           .setName('Custom Quartz commit SHA')
           .setDesc(`Leave blank to use the plugin default (${DEFAULT_QUARTZ_COMMIT.slice(0, 7)}).`)
           .addText((text) => {
@@ -297,8 +312,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
               .setPlaceholder(DEFAULT_QUARTZ_COMMIT)
               .setValue(this.plugin.settings.quartzCommitSha ?? '')
               .onChange(async (value: string) => {
-                const trimmed: string = value.trim();
-                this.plugin.settings.quartzCommitSha = trimmed || null;
+                this.plugin.settings.quartzCommitSha = value.trim() || null;
                 await this.plugin.saveSettings();
               });
           });
@@ -306,25 +320,8 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     }
   }
 
-  private renderDevelopmentSettings(containerEl: HTMLElement): void {
-    new Setting(containerEl).setName('Development').setHeading();
-
-    new Setting(containerEl)
-      .setName('Preview publish success')
-      .setDesc('Open the success screen with mock data for githubpublish-wiki.')
-      .addButton((btn) => {
-        btn.setButtonText('Preview');
-        btn.onClick(() => {
-          ProgressModal.openDonePreview(this.app, {
-            mode: 'incremental',
-            liveUrl: 'https://oilandrust.github.io/githubpublish-wiki/',
-          });
-        });
-      });
-  }
-
   private renderSavedSetup(containerEl: HTMLElement, saved: NonNullable<PluginSettings['savedSetup']>): void {
-    new Setting(containerEl).setName('Saved setup').setHeading();
+    addSetting(containerEl).setName('Saved setup').setHeading();
     const summary = childEl(containerEl, 'dl', { cls: 'github-publish-summary' });
     this.addSummaryRow(summary, 'Site name', saved.siteName);
     this.addSummaryRow(summary, 'Vault folder', saved.contentFolder);
@@ -334,11 +331,11 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       saved.repoMode === 'create' ? `Create: ${saved.repoName}` : `Existing: ${saved.repoName}`,
     );
 
-    new Setting(containerEl).addButton((btn) => {
+    addSetting(containerEl).addButton((btn) => {
       btn.setButtonText('Continue publish').setCta();
       btn.onClick(() => {
         if (!this.plugin.settings.accessToken) {
-          new Notice('Connect to GitHub in settings first.');
+          showNotice('Connect to GitHub in settings first.');
           return;
         }
         startPublish(this.plugin);

@@ -1,4 +1,4 @@
-import type { ComponentType, ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import type { AssetNode, NoteNode } from '../types';
 import { h } from '../ui';
 
@@ -47,11 +47,9 @@ function AssetViewer({ node }: { node: AssetNode }): ReactElement {
   );
 }
 
-const AssetViewerComp = AssetViewer as ComponentType<Record<string, unknown>>;
-
 export function ContentView({ node }: ContentViewProps): ReactElement {
   if (node.type === 'asset') {
-    return h(AssetViewerComp, { node });
+    return h(AssetViewer, { node });
   }
 
   return h(

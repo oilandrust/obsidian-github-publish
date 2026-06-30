@@ -1,8 +1,13 @@
-import { App, Modal, Notice, Setting } from 'obsidian';
+import { App, Modal } from 'obsidian';
 import { pollWorkflowRun } from '../github/actions';
 import { PublishResult } from '../publish/initialPublish';
 import { ProgressPhase, ProgressState } from '../settings';
+import { copyTextToClipboard, openUrl } from './browser';
 import { childDiv, childEl, childSpan } from './dom';
+import { elAddClass, elEmpty, elSetAttr, elSetText } from './element';
+import { closeModal, openModal } from './modalApi';
+import { showNotice } from './notices';
+import { addSetting } from './settingsUi';
 
 export type ProgressModalMode = 'full' | 'incremental';
 
@@ -35,8 +40,8 @@ export class ProgressModal extends Modal {
 
   onOpen(): void {
     const { contentEl } = this;
-    contentEl.empty();
-    contentEl.addClass('github-publish-modal');
+    elEmpty(contentEl);
+    elAddClass(contentEl, 'github-publish-modal');
 
     if (this.options?.previewState) {
       this.state = { ...this.options.previewState };
@@ -54,7 +59,8 @@ export class ProgressModal extends Modal {
     app: App,
     options: { mode?: ProgressModalMode; liveUrl: string; message?: string },
   ): void {
-    new ProgressModal(
+    openModal(
+      new ProgressModal(
       app,
       '',
       async () => {
@@ -69,7 +75,8 @@ export class ProgressModal extends Modal {
           liveUrl: options.liveUrl,
         },
       },
-    ).open();
+    ),
+    );
   }
 
   private async run(): Promise<void> {
@@ -127,7 +134,7 @@ export class ProgressModal extends Modal {
 
       await this.onComplete(result);
       if (this.runningInBackground) {
-        new Notice(`GitHub Publish: site updated — ${result.liveUrl}`);
+        showNotice(`GitHub Publish: site updated — ${result.liveUrl}`);
       }
     } catch (error: unknown) {
       this.state = {
@@ -138,7 +145,7 @@ export class ProgressModal extends Modal {
       if (!this.runningInBackground) {
         this.render();
       } else {
-        new Notice(
+        showNotice(
           `GitHub Publish failed: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -171,8 +178,8 @@ export class ProgressModal extends Modal {
 
   private render(): void {
     const { contentEl } = this;
-    contentEl.empty();
-    contentEl.addClass('github-publish-modal');
+    elEmpty(contentEl);
+    elAddClass(contentEl, 'github-publish-modal');
 
     const title =
       this.options?.mode === 'incremental'
@@ -197,17 +204,17 @@ export class ProgressModal extends Modal {
       const icon = childSpan(row, { cls: 'github-publish-step-icon' });
 
       if (this.state.phase === 'error' && i === failedIndex) {
-        row.addClass('github-publish-step-error');
-        icon.setText('✗');
+        elAddClass(row, 'github-publish-step-error');
+        elSetText(icon, '✗');
       } else if (i < currentIndex || this.state.phase === 'done') {
-        row.addClass('github-publish-step-done');
-        icon.setText('✓');
+        elAddClass(row, 'github-publish-step-done');
+        elSetText(icon, '✓');
       } else if (i === currentIndex) {
-        row.addClass('github-publish-step-active');
-        icon.setText('…');
+        elAddClass(row, 'github-publish-step-active');
+        elSetText(icon, '…');
       } else {
-        row.addClass('github-publish-step-pending');
-        icon.setText('○');
+        elAddClass(row, 'github-publish-step-pending');
+        elSetText(icon, '○');
       }
 
       childSpan(row, { text: label });
@@ -225,18 +232,18 @@ export class ProgressModal extends Modal {
 
     if (this.state.phase === 'done' && this.state.liveUrl) {
       this.renderLiveUrlRow(contentEl, this.state.liveUrl);
-      new Setting(contentEl)
+      addSetting(contentEl)
         .addButton((btn) => {
           btn.setButtonText('Open site').setCta();
           btn.onClick(() => {
             const url = this.state.liveUrl;
-            if (url) window.open(url);
+            if (url) openUrl(url);
           });
         })
         .addButton((btn) => {
           btn.setButtonText('Close');
           btn.onClick(() => {
-            this.close();
+            closeModal(this);
           });
         });
       return;
@@ -245,29 +252,29 @@ export class ProgressModal extends Modal {
     if (this.state.phase === 'error') {
       childEl(contentEl, 'p', { cls: 'github-publish-step-error', text: this.state.error ?? '' });
       if (this.state.actionsUrl) {
-        new Setting(contentEl).addButton((btn) => {
+        addSetting(contentEl).addButton((btn) => {
           btn.setButtonText('View Actions run');
           btn.onClick(() => {
             const url = this.state.actionsUrl;
-            if (url) window.open(url);
+            if (url) openUrl(url);
           });
         });
       }
-      new Setting(contentEl).addButton((btn) => {
+      addSetting(contentEl).addButton((btn) => {
         btn.setButtonText('Close');
         btn.onClick(() => {
-          this.close();
+          closeModal(this);
         });
       });
       return;
     }
 
-    new Setting(contentEl).addButton((btn) => {
+    addSetting(contentEl).addButton((btn) => {
       btn.setButtonText('Continue in background');
       btn.onClick(() => {
         this.runningInBackground = true;
-        new Notice('Publishing in background — you will be notified when it finishes.');
-        this.close();
+        showNotice('Publishing in background — you will be notified when it finishes.');
+        closeModal(this);
       });
     });
   }
@@ -285,16 +292,16 @@ export class ProgressModal extends Modal {
     const copyBtn = childEl(row, 'button', {
       cls: 'clickable-icon github-publish-copy-url',
     });
-    copyBtn.setAttr('aria-label', 'Copy site URL');
+    elSetAttr(copyBtn, 'aria-label', 'Copy site URL');
     copyBtn.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
     copyBtn.addEventListener('click', () => {
-      void navigator.clipboard.writeText(liveUrl).then(
+      void copyTextToClipboard(liveUrl).then(
         () => {
-          new Notice('Site URL copied to clipboard');
+          showNotice('Site URL copied to clipboard');
         },
         () => {
-          new Notice('Could not copy URL');
+          showNotice('Could not copy URL');
         },
       );
     });

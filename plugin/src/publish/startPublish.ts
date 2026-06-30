@@ -1,4 +1,3 @@
-import { Notice } from 'obsidian';
 import { GitHubPublishHost } from '../pluginHost';
 import { log } from '../log';
 import { PublishedSite, SetupConfig } from '../settings';
@@ -14,6 +13,8 @@ import { countDiffChanges } from './diffVault';
 import { runInitialPublish } from './initialPublish';
 import { detectUnpublishedChanges, runPublishChanges } from './publishChanges';
 import { ProgressModal } from '../ui/ProgressModal';
+import { openModal } from '../ui/modalApi';
+import { showNotice } from '../ui/notices';
 
 export function saveSetupConfig(plugin: GitHubPublishHost, config: SetupConfig): void {
   plugin.settings.savedSetup = config;
@@ -29,13 +30,13 @@ export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): v
   const username = plugin.settings.githubUsername;
 
   if (!token || !username) {
-    new Notice('Connect to GitHub in plugin settings first.');
+    showNotice('Connect to GitHub in plugin settings first.');
     return;
   }
 
   const publishConfig = withTemplateSettings(config ?? plugin.settings.savedSetup, plugin);
   if (!publishConfig) {
-    new Notice('No saved publish setup. Run the setup wizard first.');
+    showNotice('No saved publish setup. Run the setup wizard first.');
     return;
   }
 
@@ -43,7 +44,7 @@ export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): v
 
   const publishingId = siteId(username, publishConfig.repoName);
   if (plugin.isSitePublishing(publishingId)) {
-    new Notice('Publish already in progress for this site.');
+    showNotice('Publish already in progress for this site.');
     return;
   }
 
@@ -66,7 +67,7 @@ export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): v
       plugin.settings.publishedSites = upsertPublishedSite(plugin.settings.publishedSites, site);
       plugin.settings.savedSetup = null;
       await plugin.saveSettings();
-      new Notice(`Site published: ${result.liveUrl}`);
+      showNotice(`Site published: ${result.liveUrl}`);
     },
     {
       mode: 'full',
@@ -74,7 +75,7 @@ export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): v
     },
   );
 
-  progress.open();
+  openModal(progress);
 }
 
 export function startPublishChanges(plugin: GitHubPublishHost, site: PublishedSite): void {
@@ -82,17 +83,17 @@ export function startPublishChanges(plugin: GitHubPublishHost, site: PublishedSi
   const token = plugin.settings.accessToken;
 
   if (!token) {
-    new Notice('Connect to GitHub in plugin settings first.');
+    showNotice('Connect to GitHub in plugin settings first.');
     return;
   }
 
   if (!isPublishedSite(site)) {
-    new Notice('Complete initial publish before publishing changes.');
+    showNotice('Complete initial publish before publishing changes.');
     return;
   }
 
   if (plugin.isSitePublishing(site.id)) {
-    new Notice('Publish already in progress for this site.');
+    showNotice('Publish already in progress for this site.');
     return;
   }
 
@@ -112,7 +113,7 @@ export function startPublishChanges(plugin: GitHubPublishHost, site: PublishedSi
         },
       );
       await plugin.saveSettings();
-      new Notice(`Changes published: ${result.liveUrl}`);
+      showNotice(`Changes published: ${result.liveUrl}`);
     },
     {
       mode: 'incremental',
@@ -120,7 +121,7 @@ export function startPublishChanges(plugin: GitHubPublishHost, site: PublishedSi
     },
   );
 
-  progress.open();
+  openModal(progress);
 }
 
 export async function hasUnpublishedChanges(

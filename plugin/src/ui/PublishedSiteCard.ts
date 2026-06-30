@@ -1,4 +1,4 @@
-import { App, Notice } from 'obsidian';
+import { App } from 'obsidian';
 import { checkPublishStatus, StatusCheck } from '../github/publishStatus';
 import { detectUnpublishedChanges } from '../publish/publishChanges';
 import { countDiffChanges } from '../publish/diffVault';
@@ -11,6 +11,8 @@ import {
 import { showAdvancedSettings } from '../buildFlags';
 import { GitHubPublishHost } from '../pluginHost';
 import { childDiv, childEl, childSpan } from './dom';
+import { elAddClass, elRemoveClass, elSetText } from './element';
+import { showNotice } from './notices';
 
 export class PublishedSiteCard {
   constructor(
@@ -49,7 +51,7 @@ export class PublishedSiteCard {
     const repoStatus = childSpan(repoValue, {
       cls: 'github-publish-status github-publish-status-checking',
     });
-    repoStatus.setText('Checking…');
+    elSetText(repoStatus, 'Checking…');
     const repoLink = childEl(repoValue, 'a', {
       cls: 'github-publish-summary-link',
       href: repoUrl,
@@ -63,7 +65,7 @@ export class PublishedSiteCard {
     const liveStatus = childSpan(liveValue, {
       cls: 'github-publish-status github-publish-status-checking',
     });
-    liveStatus.setText('Checking…');
+    elSetText(liveStatus, 'Checking…');
     const liveLink = childEl(liveValue, 'a', {
       cls: 'github-publish-summary-link',
       href: liveUrl,
@@ -82,9 +84,9 @@ export class PublishedSiteCard {
     let publishBtn: HTMLButtonElement | null = null;
 
     if (isPublishing) {
-      changesStatus.setText('Publishing in progress');
+      elSetText(changesStatus, 'Publishing in progress');
     } else {
-      changesStatus.setText('Checking for changes…');
+      elSetText(changesStatus, 'Checking for changes…');
 
       publishBtn = childEl(changesValue, 'button', {
         cls: 'mod-cta github-publish-changes-button',
@@ -93,7 +95,7 @@ export class PublishedSiteCard {
       publishBtn.disabled = true;
       publishBtn.addEventListener('click', () => {
         if (!token) {
-          new Notice('Connect to GitHub in settings first.');
+          showNotice('Connect to GitHub in settings first.');
           return;
         }
         this.onPublishChanges(this.site);
@@ -107,8 +109,8 @@ export class PublishedSiteCard {
         this.applyStatusCheck(liveStatus, result.liveSite);
       });
     } else {
-      repoStatus.setText('Connect GitHub to check status');
-      liveStatus.setText('Connect GitHub to check status');
+      elSetText(repoStatus, 'Connect GitHub to check status');
+      elSetText(liveStatus, 'Connect GitHub to check status');
     }
 
     if (isPublishing) {
@@ -119,34 +121,37 @@ export class PublishedSiteCard {
       if (this.isStale()) return;
       if (!publishBtn) return;
       if (!result) {
-        changesStatus.removeClass('github-publish-status-checking');
-        changesStatus.addClass('github-publish-status-error');
-        changesStatus.setText('Unable to check for changes');
+        elRemoveClass(changesStatus, 'github-publish-status-checking');
+        elAddClass(changesStatus, 'github-publish-status-error');
+        elSetText(changesStatus, 'Unable to check for changes');
         return;
       }
 
       const hasChanges = countDiffChanges(result.diff) > 0;
-      changesStatus.removeClass(
+      elRemoveClass(
+        changesStatus,
         'github-publish-status-checking',
         'github-publish-status-live',
         'github-publish-status-unreachable',
       );
-      changesStatus.addClass(
+      elAddClass(
+        changesStatus,
         hasChanges ? 'github-publish-changes-pending' : 'github-publish-status-live',
       );
-      changesStatus.setText(result.summary);
+      elSetText(changesStatus, result.summary);
       publishBtn.disabled = !hasChanges;
     });
   }
 
   private applyStatusCheck(element: HTMLElement, check: StatusCheck): void {
-    element.removeClass(
+    elRemoveClass(
+      element,
       'github-publish-status-checking',
       'github-publish-status-live',
       'github-publish-status-unreachable',
       'github-publish-status-error',
     );
-    element.addClass(`github-publish-status-${check.status}`);
+    elAddClass(element, `github-publish-status-${check.status}`);
     const statusLabel =
       check.status === 'live'
         ? 'Live'
@@ -155,7 +160,7 @@ export class PublishedSiteCard {
           : check.status === 'error'
             ? 'Error'
             : 'Checking…';
-    element.setText(statusLabel);
+    elSetText(element, statusLabel);
   }
 
   private addSummaryRow(dl: HTMLElement, label: string, value: string): void {

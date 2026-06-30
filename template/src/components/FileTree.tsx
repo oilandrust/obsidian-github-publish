@@ -1,5 +1,5 @@
-import { useState, type ComponentType, type ReactElement } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useState, type ReactElement } from '../react';
+import { NavLink } from '../router';
 import type { TreeNode } from '../types';
 import { h } from '../ui';
 
@@ -7,8 +7,6 @@ interface FileTreeProps {
   tree: TreeNode[];
   depth?: number;
 }
-
-const Link = NavLink as ComponentType<Record<string, unknown>>;
 
 function nodeIcon(node: TreeNode): string {
   if (node.type === 'folder') return '📁';
@@ -26,7 +24,7 @@ function FolderItem({
   node: Extract<TreeNode, { type: 'folder' }>;
   depth: number;
 }): ReactElement {
-  const [open, setOpen] = useState<boolean>(depth < 1);
+  const [open, setOpen] = useState(depth < 1);
 
   return h(
     'li',
@@ -46,12 +44,9 @@ function FolderItem({
       h('span', { className: 'tree-icon' }, nodeIcon(node)),
       h('span', { className: 'tree-label' }, node.name),
     ),
-    open ? h(FileTreeComp, { tree: node.children, depth: depth + 1 }) : null,
+    open ? h(FileTree, { tree: node.children, depth: depth + 1 }) : null,
   );
 }
-
-const FolderItemComp = FolderItem as ComponentType<Record<string, unknown>>;
-const FileTreeComp = FileTree as ComponentType<Record<string, unknown>>;
 
 export function FileTree({ tree, depth = 0 }: FileTreeProps): ReactElement {
   return h(
@@ -59,7 +54,7 @@ export function FileTree({ tree, depth = 0 }: FileTreeProps): ReactElement {
     { className: 'file-tree', role: 'tree' },
     ...tree.map((node) => {
       if (node.type === 'folder') {
-        return h(FolderItemComp, {
+        return h(FolderItem, {
           key: `folder-${node.name}-${String(depth)}`,
           node,
           depth,
@@ -69,7 +64,7 @@ export function FileTree({ tree, depth = 0 }: FileTreeProps): ReactElement {
       return h(
         'li',
         { key: node.id, className: 'tree-item', role: 'treeitem' },
-        h(Link, {
+        h(NavLink, {
           to: `/view/${node.id}`,
           className: ({ isActive }: { isActive: boolean }): string =>
             `tree-link${isActive ? ' active' : ''}`,
