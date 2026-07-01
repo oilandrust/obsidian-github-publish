@@ -17,10 +17,10 @@ Checkout the Wiki of the project that is published with the Quartz template.
 ![Published site example (light theme)](Wiki/publish-example-light.png)
 
 ## Keep track of changes and publish your updated notes
-The plugin keeps track of edited notes, lets you know when there are changes, and lets you publish the latest notes with a click.
+The plugin keeps track of your published sites, lets you know when there are changes, and lets you publish the latest notes with a click.
 
-## User Friendly UX
-The plugin is designed to make the process of publishing as smooth as possible and to give you the info you need to know what is going on. Just what you would expect from a modern usable software tool.
+![Site Status UI](Wiki/site-status-ui.png)
+
 
 ## Features
 
@@ -37,39 +37,13 @@ The plugin is designed to make the process of publishing as smooth as possible a
 3. A commit to `main` triggers GitHub Actions, which builds `dist/` and deploys to GitHub Pages.
 4. Later publishes diff your vault folder against a stored manifest and push only what changed.
 
-## Missing some features?
+## Enjoying the pluggin or missing some features?
 
-The pluggin is in a early prototype version and I am curious to know what features you would like to see, get in touch directly via email: o.rouiller@gmail.com.
+Get in touch! The pluggin is in a early prototype version and I am curious to know what features you would like to see, get in touch directly via email: orouiller@gmail.com.
 
 ## Some Issue?
 
 Please report issues and bugs on the [GitHub Issue Page](https://github.com/oilandrust/obsidian-github-publish/issues)
-
-## Install
-
-This plugin is not yet on the Obsidian Community Plugins store. Install manually:
-
-### From a release (recommended)
-
-1. Download the latest release assets (or build locally—see below).
-2. Copy or symlink the `plugin/` folder into your vault:
-
-   ```
-   <vault>/.obsidian/plugins/github-publish/
-   ```
-
-3. Enable **GitHub Publish** under Settings → Community plugins.
-4. Open Settings → **GitHub Publish** → **Connect to GitHub**.
-5. Run the command palette → **GitHub Publish: Set up site**.
-
-### Symlink for development
-
-```bash
-ln -s /path/to/obsidian-github-publish/plugin \
-  ~/path/to/vault/.obsidian/plugins/github-publish
-```
-
-After changing plugin code, rebuild and reload Obsidian (or use the **Reload app without saving** command).
 
 ## Usage
 
@@ -77,11 +51,16 @@ After changing plugin code, rebuild and reload Obsidian (or use the **Reload app
 |---------|-------------|
 | **GitHub Publish: Set up site** | Wizard for a new published site |
 | **GitHub Publish: Publish changes** | Push note updates (picks a site if you have several) |
-| **GitHub Publish: Continue publish** | Resume an interrupted first publish |
 
 Published sites appear as cards in the plugin settings, each with its own **Publish changes** button and live status.
 
+
+
 If publish fails with an `UpdateRef` permissions error, disconnect and reconnect GitHub so your token includes the `workflow` scope.
+
+## Deleting a published Site
+
+The Pluggin currently do not implement deletion of site and repository. Please delete the repository on your GitHub account, you can find a link to it in the site status of the puggin settings.
 
 ## Development
 
@@ -101,22 +80,6 @@ npm run build:plugin
 | `npm run build` | Plugin only (assumes toolchains already synced) |
 
 More detail: [plugin/README.md](plugin/README.md).
-
-### Repository layout
-
-```
-plugin/          Obsidian plugin (manifest, main.ts, bundled toolchains)
-  assets/
-    toolchain-quartz/   Default static site generator (Quartz)
-    toolchain-inhouse/  Alternative Vite + React template
-scripts/         Build and toolchain sync helpers
-template/        Standalone in-house site template (local dev)
-Wiki/            Design notes and specifications
-```
-
-## Status
-
-Early prototype (v0.1.0). Expect rough edges. Desktop only.
 
 ## License
 
