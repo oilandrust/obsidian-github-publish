@@ -5,7 +5,7 @@ import { SetupConfig } from '../settings';
 import { countFilesInFolder } from '../publish/scanVault';
 import { saveSetupConfig, startPublish } from '../publish/startPublish';
 import { FolderTree } from './FolderTree';
-import { childDiv, childEl } from './dom';
+import { childDiv, childEl, addCopyButton } from './dom';
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -163,8 +163,12 @@ export class SetupModal extends Modal {
           });
         });
     } catch (error: unknown) {
-      childEl(container, 'p', {
-        text: error instanceof Error ? error.message : String(error),
+      const message = error instanceof Error ? error.message : String(error);
+      const errorRow = childDiv(container, { cls: 'github-publish-error-row' });
+      childEl(errorRow, 'p', { cls: 'github-publish-step-error', text: message });
+      addCopyButton(errorRow, message, {
+        ariaLabel: 'Copy error message',
+        successNotice: 'Error copied to clipboard',
       });
     }
   }

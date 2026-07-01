@@ -45,6 +45,20 @@ Get in touch! The pluggin is in a early prototype version and I am curious to kn
 
 Please report issues and bugs on the [GitHub Issue Page](https://github.com/oilandrust/obsidian-github-publish/issues)
 
+## Install
+
+Download the latest release, then install into your vault:
+
+```
+<vault>/.obsidian/plugins/github-publish/
+```
+
+**From a release (recommended):** download `plugin-dist.zip`, extract it into that folder. The zip includes `main.js`, `manifest.json`, `styles.css`, and the required `assets/` directory (Quartz toolchain).
+
+Downloading only `main.js` and `manifest.json` without `assets/` will cause publish to fail.
+
+**For development:** symlink or copy the whole `plugin/` folder from this repository (after `npm run build:plugin`).
+
 ## Usage
 
 | Command | Description |

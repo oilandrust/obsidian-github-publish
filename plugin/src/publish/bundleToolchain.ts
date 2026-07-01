@@ -41,12 +41,21 @@ function toolchainDirName(engine: TemplateEngine): string {
   return engine === 'quartz' ? 'toolchain-quartz' : 'toolchain-inhouse';
 }
 
-function loadManifestFiles(toolchainDir: string): string[] {
+function toolchainMissingMessage(toolchainDir: string, engine: TemplateEngine): string {
+  const bundleName = toolchainDirName(engine);
+  return (
+    `Publish toolchain is missing at ${toolchainDir}.\n\n` +
+    `The plugin folder must include assets/${bundleName}/ (bundled site templates and workflows).\n\n` +
+    'If you installed from a GitHub release, extract plugin-dist.zip into your vault plugin folder — ' +
+    'downloading only main.js and manifest.json is not enough.\n\n' +
+    'Developers: run npm run sync:toolchain in the obsidian-github-publish repo, then rebuild.'
+  );
+}
+
+function loadManifestFiles(toolchainDir: string, engine: TemplateEngine): string[] {
   const manifestPath: string = path.join(toolchainDir, 'manifest.json');
   if (!fileExists(manifestPath)) {
-    throw new Error(
-      `Toolchain not found at ${toolchainDir}. Run npm run sync:toolchain in the obsidian-github-publish repo.`,
-    );
+    throw new Error(toolchainMissingMessage(toolchainDir, engine));
   }
 
   const manifest = parseJson<ToolchainManifest | string[]>(readTextFile(manifestPath));
@@ -94,7 +103,7 @@ function pushTemplatedFile(
 }
 
 function loadInhouseToolchain(toolchainDir: string, context: PublishBundleContext): RepoFile[] {
-  const filePaths = loadManifestFiles(toolchainDir);
+  const filePaths = loadManifestFiles(toolchainDir, context.templateEngine);
   const files: RepoFile[] = [];
 
   for (const relativePath of filePaths) {
@@ -108,7 +117,7 @@ function loadInhouseToolchain(toolchainDir: string, context: PublishBundleContex
 }
 
 function loadQuartzToolchain(toolchainDir: string, context: PublishBundleContext): RepoFile[] {
-  const filePaths = loadManifestFiles(toolchainDir);
+  const filePaths = loadManifestFiles(toolchainDir, context.templateEngine);
   const files: RepoFile[] = [];
 
   for (const relativePath of filePaths) {
@@ -132,6 +141,11 @@ function loadQuartzToolchain(toolchainDir: string, context: PublishBundleContext
   }
 
   return files;
+}
+
+export function assertPublishToolchainReady(pluginDir: string, engine: TemplateEngine): void {
+  const toolchainDir: string = path.join(pluginDir, 'assets', toolchainDirName(engine));
+  loadManifestFiles(toolchainDir, engine);
 }
 
 export function loadPublishToolchainFiles(

@@ -4,7 +4,7 @@ import { enableGitHubPages } from '../github/pages';
 import { createInitialCommit, ensureRepositoryReadyForGit } from '../github/git';
 import { resolveRepository } from '../github/repos';
 import { ProgressState, RepoFile, SetupConfig } from '../settings';
-import { loadPublishToolchainFiles, publishBundleContextFromConfig } from './bundleToolchain';
+import { loadPublishToolchainFiles, publishBundleContextFromConfig, assertPublishToolchainReady } from './bundleToolchain';
 import { buildContentManifest } from './diffVault';
 import { ensureQuartzHomePage } from './ensureQuartzHomePage';
 import { scanVaultFolder } from './scanVault';
@@ -41,6 +41,9 @@ export async function runInitialPublish(
   if ((config.templateEngine ?? 'quartz') === 'quartz') {
     contentFiles = ensureQuartzHomePage(contentFiles, config.siteName);
   }
+
+  onProgress({ phase: 'preparing', message: 'Loading publish toolchain…' });
+  assertPublishToolchainReady(pluginDir, config.templateEngine ?? 'quartz');
 
   onProgress({
     phase: 'creating-repo',

@@ -197,6 +197,21 @@
   min-width: 0;
 }
 
+.github-publish-error-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  min-width: 0;
+}
+
+.github-publish-error-row p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  word-break: break-word;
+}
+
 .github-publish-live-url-row .github-publish-live-link {
   flex: 1;
   min-width: 0;

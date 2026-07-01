@@ -2,7 +2,7 @@ import { App, Modal, Notice, Setting } from 'obsidian';
 import { pollWorkflowRun } from '../github/actions';
 import { PublishResult } from '../publish/initialPublish';
 import { ProgressPhase, ProgressState } from '../settings';
-import { childDiv, childEl, childSpan } from './dom';
+import { childDiv, childEl, childSpan, addCopyButton } from './dom';
 
 export type ProgressModalMode = 'full' | 'incremental';
 
@@ -234,7 +234,14 @@ export class ProgressModal extends Modal {
     }
 
     if (this.state.phase === 'error') {
-      childEl(contentEl, 'p', { cls: 'github-publish-step-error', text: this.state.error ?? '' });
+      const errorText = this.state.error ?? '';
+      const copyText = [this.state.message, errorText].filter(Boolean).join('\n\n');
+      const errorRow = childDiv(contentEl, { cls: 'github-publish-error-row' });
+      childEl(errorRow, 'p', { cls: 'github-publish-step-error', text: errorText });
+      addCopyButton(errorRow, copyText, {
+        ariaLabel: 'Copy error message',
+        successNotice: 'Error copied to clipboard',
+      });
       if (this.state.actionsUrl) {
         new Setting(contentEl).addButton((btn) =>
           btn.setButtonText('View Actions run').onClick(() => window.open(this.state.actionsUrl)),
@@ -263,17 +270,9 @@ export class ProgressModal extends Modal {
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
 
-    const copyBtn = childEl(row, 'button', {
-      cls: 'clickable-icon github-publish-copy-url',
-    });
-    copyBtn.setAttr('aria-label', 'Copy site URL');
-    copyBtn.innerHTML =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
-    copyBtn.addEventListener('click', () => {
-      void navigator.clipboard.writeText(liveUrl).then(
-        () => new Notice('Site URL copied to clipboard'),
-        () => new Notice('Could not copy URL'),
-      );
+    addCopyButton(row, liveUrl, {
+      ariaLabel: 'Copy site URL',
+      successNotice: 'Site URL copied to clipboard',
     });
   }
 }
