@@ -25,6 +25,7 @@ import {
 import { showAdvancedSettings } from './src/buildFlags';
 import { childDiv, childEl } from './src/ui/dom';
 import { loadPluginSettingsData } from './src/utils/pluginData';
+import { ensureEmbeddedAssetsExtracted } from './src/toolchain/extractEmbeddedAssets';
 
 export default class GitHubPublishPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
@@ -33,6 +34,12 @@ export default class GitHubPublishPlugin extends Plugin {
 
   async onload(): Promise<void> {
     await this.loadSettings();
+    try {
+      ensureEmbeddedAssetsExtracted(this.getPluginDir(), this.manifest.version);
+    } catch (error: unknown) {
+      console.error('GitHub Publish: failed to extract bundled assets', error);
+    }
+
     this.settingTab = new GitHubPublishSettingTab(this.app, this);
     this.addSettingTab(this.settingTab);
 
@@ -70,6 +77,10 @@ export default class GitHubPublishPlugin extends Plugin {
 
   getPluginDir(): string {
     return getPluginDir(this.app, this.manifest.id);
+  }
+
+  getPluginVersion(): string {
+    return this.manifest.version;
   }
 
   async setAccessToken(token: string) {

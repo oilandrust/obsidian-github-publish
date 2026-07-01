@@ -1,8 +1,10 @@
 import * as path from 'path';
 import { resolveQuartzCommitSha } from '../quartz/versions';
-import { RepoFile, SetupConfig, TemplateEngine } from '../settings';
+import { TemplateEngine } from '../settings';
+import { RepoFile, SetupConfig } from '../settings';
 import { fileExists, readBytesFile, readTextFile } from '../utils/fs';
 import { parseJson } from '../utils/json';
+import { ensureEmbeddedAssetsExtracted } from '../toolchain/extractEmbeddedAssets';
 
 interface ToolchainManifest {
   files?: string[];
@@ -45,10 +47,9 @@ function toolchainMissingMessage(toolchainDir: string, engine: TemplateEngine): 
   const bundleName = toolchainDirName(engine);
   return (
     `Publish toolchain is missing at ${toolchainDir}.\n\n` +
-    `The plugin folder must include assets/${bundleName}/ (bundled site templates and workflows).\n\n` +
-    'If you installed from a GitHub release, extract plugin-dist.zip into your vault plugin folder — ' +
-    'downloading only main.js and manifest.json is not enough.\n\n' +
-    'Developers: run npm run sync:toolchain in the obsidian-github-publish repo, then rebuild.'
+    `Expected assets/${bundleName}/ in the plugin folder. ` +
+    'Try reloading Obsidian or reinstalling the plugin from the community store.\n\n' +
+    'Developers: run npm run build in the plugin directory (with assets/ present) or npm run sync:toolchain first.'
   );
 }
 
@@ -143,7 +144,12 @@ function loadQuartzToolchain(toolchainDir: string, context: PublishBundleContext
   return files;
 }
 
-export function assertPublishToolchainReady(pluginDir: string, engine: TemplateEngine): void {
+export function assertPublishToolchainReady(
+  pluginDir: string,
+  engine: TemplateEngine,
+  pluginVersion: string,
+): void {
+  ensureEmbeddedAssetsExtracted(pluginDir, pluginVersion);
   const toolchainDir: string = path.join(pluginDir, 'assets', toolchainDirName(engine));
   loadManifestFiles(toolchainDir, engine);
 }

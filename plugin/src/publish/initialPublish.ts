@@ -21,6 +21,7 @@ export interface PublishResult {
 export async function runInitialPublish(
   app: App,
   pluginDir: string,
+  pluginVersion: string,
   token: string,
   username: string,
   config: SetupConfig,
@@ -43,7 +44,7 @@ export async function runInitialPublish(
   }
 
   onProgress({ phase: 'preparing', message: 'Loading publish toolchain…' });
-  assertPublishToolchainReady(pluginDir, config.templateEngine ?? 'quartz');
+  assertPublishToolchainReady(pluginDir, config.templateEngine ?? 'quartz', pluginVersion);
 
   onProgress({
     phase: 'creating-repo',

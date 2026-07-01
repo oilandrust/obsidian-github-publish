@@ -53,9 +53,9 @@ Download the latest release, then install into your vault:
 <vault>/.obsidian/plugins/github-publish/
 ```
 
-**From a release (recommended):** download `plugin-dist.zip`, extract it into that folder. The zip includes `main.js`, `manifest.json`, `styles.css`, and the required `assets/` directory (Quartz toolchain).
+**From the Obsidian community store:** install as usual — publish toolchains are embedded in `main.js` and extracted on first run.
 
-Downloading only `main.js` and `manifest.json` without `assets/` will cause publish to fail.
+**From a GitHub release:** `main.js`, `manifest.json`, and `styles.css` are enough for Quartz publishing. Optionally download `plugin-dist.zip` for a full folder layout (includes in-house `template/` sources for development).
 
 **For development:** symlink or copy the whole `plugin/` folder from this repository (after `npm run build:plugin`).
 

@@ -54,7 +54,15 @@ export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): v
     plugin.app,
     token,
     (onProgress) =>
-      runInitialPublish(plugin.app, pluginDir, token, username, publishConfig, onProgress),
+      runInitialPublish(
+        plugin.app,
+        pluginDir,
+        plugin.getPluginVersion(),
+        token,
+        username,
+        publishConfig,
+        onProgress,
+      ),
     async (result) => {
       const site = publishedSiteFromPublishResult(
         publishConfig,

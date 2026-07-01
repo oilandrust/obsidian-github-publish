@@ -8,6 +8,7 @@ export interface GitHubPublishHost {
   settings: PluginSettings;
   saveSettings(): Promise<void>;
   getPluginDir(): string;
+  getPluginVersion(): string;
   markSitePublishing(siteId: string): void;
   clearSitePublishing(siteId: string): void;
   isSitePublishing(siteId: string): boolean;

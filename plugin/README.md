@@ -25,7 +25,7 @@ npm run build
    ```
    .obsidian/plugins/github-publish/
    ```
-2. Ensure the folder contains: `manifest.json`, `main.js`, `styles.css`, `assets/toolchain-inhouse/`, `assets/toolchain-quartz/`
+2. Ensure the folder contains `manifest.json`, `main.js`, and `styles.css`. Quartz toolchains are embedded in `main.js` and extracted on first load — no separate `assets/` folder is required for store installs.
 3. Enable the plugin in Obsidian → Settings → Community plugins
 4. Open Settings → GitHub Publish and click **Connect to GitHub**
 5. Run command palette → **GitHub Publish: Set up site**
