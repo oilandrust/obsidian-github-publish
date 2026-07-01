@@ -3,8 +3,34 @@ import type { DomElementInfo } from 'obsidian';
 
 type DomOpts = DomElementInfo | string;
 
-const COPY_ICON_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function appendCopyIcon(button: HTMLButtonElement): void {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('width', '16');
+  svg.setAttribute('height', '16');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+
+  const rect = document.createElementNS(SVG_NS, 'rect');
+  rect.setAttribute('width', '14');
+  rect.setAttribute('height', '14');
+  rect.setAttribute('x', '8');
+  rect.setAttribute('y', '8');
+  rect.setAttribute('rx', '2');
+  rect.setAttribute('ry', '2');
+  svg.appendChild(rect);
+
+  const path = document.createElementNS(SVG_NS, 'path');
+  path.setAttribute('d', 'M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2');
+  svg.appendChild(path);
+
+  button.appendChild(svg);
+}
 
 function asElement<T extends HTMLElement>(value: unknown): T {
   return value as T;
@@ -39,7 +65,7 @@ export function addCopyButton(
     cls: 'clickable-icon github-publish-copy-url',
   });
   copyBtn.setAttr('aria-label', options?.ariaLabel ?? 'Copy to clipboard');
-  copyBtn.innerHTML = COPY_ICON_SVG;
+  appendCopyIcon(copyBtn);
   copyBtn.addEventListener('click', () => {
     void navigator.clipboard.writeText(text).then(
       () => new Notice(options?.successNotice ?? 'Copied to clipboard'),
