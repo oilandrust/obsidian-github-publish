@@ -5,7 +5,6 @@ import {
   DEFAULT_SETTINGS,
   PluginSettings,
   PublishedSite,
-  TemplateEngine,
 } from './src/settings';
 import { migratePluginSettings, removePublishedSite } from './src/sites';
 import { SetupModal } from './src/ui/SetupModal';
@@ -275,61 +274,44 @@ class GitHubPublishSettingTab extends PluginSettingTab {
   private renderAdvancedSettings(containerEl: HTMLElement): void {
     new Setting(containerEl).setName('Advanced').setHeading();
 
+    const activeSha = resolveQuartzCommitSha(this.plugin.settings.quartzCommitSha);
+    const isKnownSha = TESTED_QUARTZ_VERSIONS.some((version) => version.sha === activeSha);
+    const dropdownValue = isKnownSha ? activeSha : 'custom';
+
     new Setting(containerEl)
-      .setName('Template engine')
-      .setDesc('Quartz is recommended for Obsidian features like wikilinks, graph, and backlinks.')
+      .setName('Quartz version')
+      .setDesc('Pinned Quartz commit used when publishing a new site.')
       .addDropdown((dropdown) => {
-        dropdown
-          .addOption('quartz', 'Quartz')
-          .addOption('inhouse', 'Built-in')
-          .setValue(this.plugin.settings.templateEngine ?? 'quartz')
-          .onChange(async (value) => {
-            this.plugin.settings.templateEngine = value as TemplateEngine;
-            await this.plugin.saveSettings();
-            this.display();
-          });
+        for (const version of TESTED_QUARTZ_VERSIONS) {
+          dropdown.addOption(version.sha, version.label);
+        }
+        dropdown.addOption('custom', 'Custom commit…');
+        dropdown.setValue(dropdownValue).onChange(async (value: string) => {
+          if (value === 'custom') {
+            this.plugin.settings.quartzCommitSha = isKnownSha ? '' : activeSha;
+          } else {
+            const sha: string = value;
+            this.plugin.settings.quartzCommitSha = sha;
+          }
+          await this.plugin.saveSettings();
+          this.display();
+        });
       });
 
-    if ((this.plugin.settings.templateEngine ?? 'quartz') === 'quartz') {
-      const activeSha = resolveQuartzCommitSha(this.plugin.settings.quartzCommitSha);
-      const isKnownSha = TESTED_QUARTZ_VERSIONS.some((version) => version.sha === activeSha);
-      const dropdownValue = isKnownSha ? activeSha : 'custom';
-
+    if (dropdownValue === 'custom') {
       new Setting(containerEl)
-        .setName('Quartz version')
-        .setDesc('Pinned Quartz commit used when publishing a new site.')
-        .addDropdown((dropdown) => {
-          for (const version of TESTED_QUARTZ_VERSIONS) {
-            dropdown.addOption(version.sha, version.label);
-          }
-          dropdown.addOption('custom', 'Custom commit…');
-          dropdown.setValue(dropdownValue).onChange(async (value: string) => {
-            if (value === 'custom') {
-              this.plugin.settings.quartzCommitSha = isKnownSha ? '' : activeSha;
-            } else {
-              const sha: string = value;
-              this.plugin.settings.quartzCommitSha = sha;
-            }
-            await this.plugin.saveSettings();
-            this.display();
-          });
+        .setName('Custom Quartz commit SHA')
+        .setDesc(`Leave blank to use the plugin default (${DEFAULT_QUARTZ_COMMIT.slice(0, 7)}).`)
+        .addText((text) => {
+          text
+            .setPlaceholder(DEFAULT_QUARTZ_COMMIT)
+            .setValue(this.plugin.settings.quartzCommitSha ?? '')
+            .onChange(async (value: string) => {
+              const trimmed: string = value.trim();
+              this.plugin.settings.quartzCommitSha = trimmed || null;
+              await this.plugin.saveSettings();
+            });
         });
-
-      if (dropdownValue === 'custom') {
-        new Setting(containerEl)
-          .setName('Custom Quartz commit SHA')
-          .setDesc(`Leave blank to use the plugin default (${DEFAULT_QUARTZ_COMMIT.slice(0, 7)}).`)
-          .addText((text) => {
-            text
-              .setPlaceholder(DEFAULT_QUARTZ_COMMIT)
-              .setValue(this.plugin.settings.quartzCommitSha ?? '')
-              .onChange(async (value: string) => {
-                const trimmed: string = value.trim();
-                this.plugin.settings.quartzCommitSha = trimmed || null;
-                await this.plugin.saveSettings();
-              });
-          });
-      }
     }
   }
 

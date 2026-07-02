@@ -156,7 +156,6 @@ function withTemplateSettings(
 
   return {
     ...config,
-    templateEngine: config.templateEngine ?? plugin.settings.templateEngine ?? 'quartz',
     quartzCommitSha:
       config.quartzCommitSha ??
       plugin.settings.quartzCommitSha ??

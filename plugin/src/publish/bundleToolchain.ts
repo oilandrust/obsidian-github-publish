@@ -1,6 +1,5 @@
 import * as path from 'path';
 import { resolveQuartzCommitSha } from '../quartz/versions';
-import { TemplateEngine } from '../settings';
 import { RepoFile, SetupConfig } from '../settings';
 import { fileExists, readBytesFile, readTextFile } from '../utils/fs';
 import { parseJson } from '../utils/json';
@@ -11,12 +10,13 @@ interface ToolchainManifest {
 }
 
 export interface PublishBundleContext {
-  templateEngine: TemplateEngine;
   siteName: string;
   repoName: string;
   owner: string;
   quartzCommitSha?: string | null;
 }
+
+const TOOLCHAIN_DIR_NAME = 'toolchain-quartz';
 
 const TEXT_EXTENSIONS = new Set([
   '.md',
@@ -39,24 +39,19 @@ function isTextFile(relativePath: string): boolean {
   return TEXT_EXTENSIONS.has(ext);
 }
 
-function toolchainDirName(engine: TemplateEngine): string {
-  return engine === 'quartz' ? 'toolchain-quartz' : 'toolchain-inhouse';
-}
-
-function toolchainMissingMessage(toolchainDir: string, engine: TemplateEngine): string {
-  const bundleName = toolchainDirName(engine);
+function toolchainMissingMessage(toolchainDir: string): string {
   return (
     `Publish toolchain is missing at ${toolchainDir}.\n\n` +
-    `Expected assets/${bundleName}/ in the plugin folder. ` +
+    `Expected assets/${TOOLCHAIN_DIR_NAME}/ in the plugin folder. ` +
     'Try reloading Obsidian or reinstalling the plugin from the community store.\n\n' +
     'Developers: run npm run build in the plugin directory (with assets/ present) or npm run sync:toolchain first.'
   );
 }
 
-function loadManifestFiles(toolchainDir: string, engine: TemplateEngine): string[] {
+function loadManifestFiles(toolchainDir: string): string[] {
   const manifestPath: string = path.join(toolchainDir, 'manifest.json');
   if (!fileExists(manifestPath)) {
-    throw new Error(toolchainMissingMessage(toolchainDir, engine));
+    throw new Error(toolchainMissingMessage(toolchainDir));
   }
 
   const manifest = parseJson<ToolchainManifest | string[]>(readTextFile(manifestPath));
@@ -103,22 +98,8 @@ function pushTemplatedFile(
   });
 }
 
-function loadInhouseToolchain(toolchainDir: string, context: PublishBundleContext): RepoFile[] {
-  const filePaths = loadManifestFiles(toolchainDir, context.templateEngine);
-  const files: RepoFile[] = [];
-
-  for (const relativePath of filePaths) {
-    if (relativePath === 'package.json.template') continue;
-    files.push(readRepoFile(toolchainDir, relativePath));
-  }
-
-  const packageTemplate = readTextFile(path.join(toolchainDir, 'package.json.template'));
-  pushTemplatedFile(files, 'package.json', packageTemplate, context);
-  return files;
-}
-
 function loadQuartzToolchain(toolchainDir: string, context: PublishBundleContext): RepoFile[] {
-  const filePaths = loadManifestFiles(toolchainDir, context.templateEngine);
+  const filePaths = loadManifestFiles(toolchainDir);
   const files: RepoFile[] = [];
 
   for (const relativePath of filePaths) {
@@ -144,42 +125,18 @@ function loadQuartzToolchain(toolchainDir: string, context: PublishBundleContext
   return files;
 }
 
-export function assertPublishToolchainReady(
-  pluginDir: string,
-  engine: TemplateEngine,
-  pluginVersion: string,
-): void {
+export function assertPublishToolchainReady(pluginDir: string, pluginVersion: string): void {
   ensureEmbeddedAssetsExtracted(pluginDir, pluginVersion);
-  const toolchainDir: string = path.join(pluginDir, 'assets', toolchainDirName(engine));
-  loadManifestFiles(toolchainDir, engine);
+  const toolchainDir: string = path.join(pluginDir, 'assets', TOOLCHAIN_DIR_NAME);
+  loadManifestFiles(toolchainDir);
 }
 
 export function loadPublishToolchainFiles(
   pluginDir: string,
   context: PublishBundleContext,
 ): RepoFile[] {
-  const engine = context.templateEngine;
-  const toolchainDir: string = path.join(pluginDir, 'assets', toolchainDirName(engine));
-
-  if (engine === 'quartz') {
-    return loadQuartzToolchain(toolchainDir, context);
-  }
-
-  return loadInhouseToolchain(toolchainDir, context);
-}
-
-/** @deprecated Use loadPublishToolchainFiles */
-export function loadToolchainFiles(
-  pluginDir: string,
-  siteName: string,
-  repoName: string,
-): RepoFile[] {
-  return loadPublishToolchainFiles(pluginDir, {
-    templateEngine: 'inhouse',
-    siteName,
-    repoName,
-    owner: repoName,
-  });
+  const toolchainDir: string = path.join(pluginDir, 'assets', TOOLCHAIN_DIR_NAME);
+  return loadQuartzToolchain(toolchainDir, context);
 }
 
 export function publishBundleContextFromConfig(
@@ -187,7 +144,6 @@ export function publishBundleContextFromConfig(
   owner: string,
 ): PublishBundleContext {
   return {
-    templateEngine: config.templateEngine ?? 'quartz',
     siteName: config.siteName,
     repoName: config.repoName,
     owner,

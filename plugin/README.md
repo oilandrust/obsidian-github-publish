@@ -10,7 +10,7 @@ From the repo root:
 npm run build:plugin
 ```
 
-This runs `sync:toolchain` (bundles both template engines) then compiles the plugin.
+This runs `sync:toolchain` (bundles the Quartz toolchain) then compiles the plugin.
 
 Or from this directory (after `npm run sync:toolchain` from root):
 
@@ -32,17 +32,13 @@ npm run build
 
 If publish fails with an `UpdateRef` permissions error, disconnect and reconnect so your token includes the `workflow` scope.
 
-## Template engines
+## Advanced settings
 
-Default engine is **Quartz** (Obsidian-flavored markdown, graph, backlinks).
-
-To test the built-in Vite template locally, build with advanced settings enabled:
+To expose Quartz version controls in plugin settings during development:
 
 ```bash
 npm run build:plugin:advanced
 ```
-
-This shows template engine and Quartz version controls in plugin settings.
 
 ## Debugging
 
@@ -62,4 +58,4 @@ During upload, the progress modal shows live status (including repository readin
 - Incremental publish (content diff only)
 - GitHub Device Flow authentication
 - Progress monitoring via GitHub Actions API
-- Quartz or built-in template engine
+- **Quartz** static site generator (Obsidian-flavored markdown, graph, backlinks)

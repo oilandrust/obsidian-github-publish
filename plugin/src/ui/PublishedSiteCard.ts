@@ -44,15 +44,8 @@ export class PublishedSiteCard {
     this.addSummaryRow(summary, 'Vault folder', this.site.contentFolder);
 
     if (showAdvancedSettings) {
-      this.addSummaryRow(
-        summary,
-        'Template',
-        this.site.templateEngine === 'inhouse' ? 'Built-in' : 'Quartz',
-      );
-      if (this.site.templateEngine === 'quartz') {
-        const sha = resolveQuartzCommitSha(this.site.quartzCommitSha);
-        this.addSummaryRow(summary, 'Quartz version', getQuartzVersionLabel(sha));
-      }
+      const sha = resolveQuartzCommitSha(this.site.quartzCommitSha);
+      this.addSummaryRow(summary, 'Quartz version', getQuartzVersionLabel(sha));
     }
 
     childEl(summary, 'dt', { text: 'Repository' });

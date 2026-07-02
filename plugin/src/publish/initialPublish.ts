@@ -30,7 +30,6 @@ export async function runInitialPublish(
   log('Starting initial publish via Git API + GraphQL updateRef', {
     contentFolder: config.contentFolder,
     repo: config.repoName,
-    templateEngine: config.templateEngine ?? 'quartz',
   });
   onProgress({ phase: 'preparing', message: 'Scanning vault folder…' });
 
@@ -39,12 +38,10 @@ export async function runInitialPublish(
     throw new Error('No publishable files found in the selected folder.');
   }
 
-  if ((config.templateEngine ?? 'quartz') === 'quartz') {
-    contentFiles = ensureQuartzHomePage(contentFiles, config.siteName);
-  }
+  contentFiles = ensureQuartzHomePage(contentFiles, config.siteName);
 
   onProgress({ phase: 'preparing', message: 'Loading publish toolchain…' });
-  assertPublishToolchainReady(pluginDir, config.templateEngine ?? 'quartz', pluginVersion);
+  assertPublishToolchainReady(pluginDir, pluginVersion);
 
   onProgress({
     phase: 'creating-repo',
@@ -66,7 +63,6 @@ export async function runInitialPublish(
   const allFiles: RepoFile[] = sortUploadFiles([...toolchainFiles, ...contentFiles]);
   log(`Prepared ${contentFiles.length} content files and ${toolchainFiles.length} toolchain files`, {
     fileCount: allFiles.length,
-    templateEngine: bundleContext.templateEngine,
     quartzCommitSha: bundleContext.quartzCommitSha,
   });
 

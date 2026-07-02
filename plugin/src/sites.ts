@@ -44,7 +44,7 @@ export function publishedSiteFromPublishResult(
     contentFolder: config.contentFolder,
     lastPublishedCommitSha: commitSha,
     manifest,
-    templateEngine: config.templateEngine ?? 'quartz',
+    templateEngine: 'quartz',
     quartzCommitSha: config.quartzCommitSha ?? null,
   };
 }
@@ -81,7 +81,6 @@ export function migratePluginSettings(raw: LegacyPluginSettings): PluginSettings
     githubUsername: raw.githubUsername ?? null,
     publishedSites: Array.isArray(raw.publishedSites) ? raw.publishedSites : [],
     savedSetup: raw.savedSetup ?? null,
-    templateEngine: raw.templateEngine ?? 'quartz',
     quartzCommitSha: raw.quartzCommitSha ?? null,
   };
 
@@ -99,7 +98,7 @@ export function migratePluginSettings(raw: LegacyPluginSettings): PluginSettings
         contentFolder: raw.contentFolder,
         lastPublishedCommitSha: raw.lastPublishedCommitSha,
         manifest: raw.manifest ?? {},
-        templateEngine: raw.templateEngine ?? 'quartz',
+        templateEngine: 'quartz',
         quartzCommitSha: raw.quartzCommitSha ?? null,
       },
     ];

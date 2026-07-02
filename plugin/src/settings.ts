@@ -1,5 +1,3 @@
-export type TemplateEngine = 'quartz' | 'inhouse';
-
 export interface PublishedSite {
   id: string;
   owner: string;
@@ -8,7 +6,8 @@ export interface PublishedSite {
   contentFolder: string;
   lastPublishedCommitSha: string;
   manifest: Record<string, string>;
-  templateEngine: TemplateEngine;
+  /** Legacy field; new sites always use Quartz. */
+  templateEngine?: 'quartz' | 'inhouse';
   quartzCommitSha: string | null;
 }
 
@@ -17,7 +16,6 @@ export interface PluginSettings {
   githubUsername: string | null;
   publishedSites: PublishedSite[];
   savedSetup: SetupConfig | null;
-  templateEngine: TemplateEngine;
   quartzCommitSha: string | null;
 }
 
@@ -26,7 +24,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   githubUsername: null,
   publishedSites: [],
   savedSetup: null,
-  templateEngine: 'quartz',
   quartzCommitSha: null,
 };
 
@@ -35,7 +32,6 @@ export interface SetupConfig {
   contentFolder: string;
   repoMode: 'create' | 'existing';
   repoName: string;
-  templateEngine?: TemplateEngine;
   quartzCommitSha?: string | null;
 }
 

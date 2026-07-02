@@ -6,13 +6,8 @@
     "strictNullChecks": true,
     "useUnknownInCatchVariables": true,
     "skipLibCheck": true,
-    "jsx": "react-jsx",
     "noEmit": true
   },
-  "include": [
-    "plugin/**/*.ts",
-    "plugin/assets/toolchain-inhouse/template/src/**/*.tsx",
-    "template/src/**/*.tsx"
-  ],
+  "include": ["plugin/**/*.ts"],
   "exclude": ["**/node_modules", "plugin/assets/toolchain-quartz/**"]
 }

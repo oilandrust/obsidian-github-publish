@@ -29,10 +29,6 @@ function isTextFile(relativePath) {
   return TEXT_EXTENSIONS.has(path.extname(relativePath));
 }
 
-function shouldEmbed(relativePath) {
-  return !relativePath.startsWith('template/') && !relativePath.includes('/template/');
-}
-
 function walkFiles(dir, relative = '') {
   const files = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -65,7 +61,7 @@ function readAssetEntry(toolchainName, relativePath) {
 
 function buildToolchainBundle(toolchainName) {
   const toolchainDir = path.join(ASSETS_DIR, toolchainName);
-  const relativeFiles = walkFiles(toolchainDir).filter(shouldEmbed).sort();
+  const relativeFiles = walkFiles(toolchainDir).sort();
   const entries = relativeFiles.map((rel) => readAssetEntry(toolchainName, rel));
 
   const manifestPaths = relativeFiles.map((rel) => rel.replace(/\\/g, '/'));
@@ -80,10 +76,7 @@ function buildToolchainBundle(toolchainName) {
 
 const pluginVersion = JSON.parse(fs.readFileSync(MANIFEST_FILE, 'utf8')).version;
 const bundle = {
-  files: [
-    ...buildToolchainBundle('toolchain-quartz'),
-    ...buildToolchainBundle('toolchain-inhouse'),
-  ],
+  files: buildToolchainBundle('toolchain-quartz'),
 };
 
 const compressed = zlib.gzipSync(JSON.stringify(bundle));

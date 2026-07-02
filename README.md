@@ -55,7 +55,7 @@ Download the latest release, then install into your vault:
 
 **From the Obsidian community store:** install as usual — publish toolchains are embedded in `main.js` and extracted on first run.
 
-**From a GitHub release:** `main.js`, `manifest.json`, and `styles.css` are enough for Quartz publishing. Optionally download `plugin-dist.zip` for a full folder layout (includes in-house `template/` sources for development).
+**From a GitHub release:** `main.js`, `manifest.json`, and `styles.css` are enough for Quartz publishing. Optionally download `plugin-dist.zip` for a full folder layout.
 
 **For development:** symlink or copy the whole `plugin/` folder from this repository (after `npm run build:plugin`).
 
@@ -88,9 +88,9 @@ npm run build:plugin
 
 | Script | Purpose |
 |--------|---------|
-| `npm run build:plugin` | Sync toolchains and build the plugin |
-| `npm run build:plugin:advanced` | Build with extra settings (template engine, Quartz version) |
-| `npm run sync:toolchain` | Refresh bundled Quartz and in-house toolchains |
+| `npm run build:plugin` | Sync Quartz toolchain and build the plugin |
+| `npm run build:plugin:advanced` | Build with Quartz version controls in settings |
+| `npm run sync:toolchain` | Refresh bundled Quartz toolchain |
 | `npm run build` | Plugin only (assumes toolchains already synced) |
 
 More detail: [plugin/README.md](plugin/README.md).

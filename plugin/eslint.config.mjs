@@ -3,7 +3,6 @@ import tseslint from 'typescript-eslint';
 import obsidianmd from 'eslint-plugin-obsidianmd';
 
 const pluginTsFiles = ['**/*.ts'];
-const inhouseTemplateFiles = ['assets/toolchain-inhouse/template/src/**/*.{ts,tsx}'];
 
 export default [
   {
@@ -13,12 +12,11 @@ export default [
       '**/*.mjs',
       'assets/toolchain-quartz/**',
       'package.json',
-      'assets/toolchain-inhouse/template/vite.config.ts',
     ],
   },
   ...tseslint.configs.recommendedTypeChecked.map((config) => ({
     ...config,
-    files: [...pluginTsFiles, ...inhouseTemplateFiles],
+    files: pluginTsFiles,
   })),
   {
     files: pluginTsFiles,
@@ -37,19 +35,11 @@ export default [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-    },
-  },
-  {
-    files: inhouseTemplateFiles,
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        project: './assets/toolchain-inhouse/template/tsconfig.json',
-        sourceType: 'module',
-      },
-    },
-    rules: {
-      'no-restricted-globals': 'off',
+      '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
     },
   },
 ];
