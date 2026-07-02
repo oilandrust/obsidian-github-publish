@@ -23,9 +23,8 @@ import {
   TESTED_QUARTZ_VERSIONS,
 } from './src/quartz/versions';
 import { showAdvancedSettings } from './src/buildFlags';
-import { childDiv, childEl } from './src/ui/dom';
+import { childDiv, childEl, addCopyButton } from './src/ui/dom';
 import { loadPluginSettingsData } from './src/utils/pluginData';
-import { ensureEmbeddedAssetsExtracted } from './src/toolchain/extractEmbeddedAssets';
 
 export default class GitHubPublishPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
@@ -34,11 +33,6 @@ export default class GitHubPublishPlugin extends Plugin {
 
   async onload(): Promise<void> {
     await this.loadSettings();
-    try {
-      ensureEmbeddedAssetsExtracted(this.getPluginDir(), this.manifest.version);
-    } catch (error: unknown) {
-      console.error('GitHub Publish: failed to extract bundled assets', error);
-    }
 
     this.settingTab = new GitHubPublishSettingTab(this.app, this);
     this.addSettingTab(this.settingTab);
@@ -216,9 +210,14 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     if (this.connecting) {
       if (this.deviceUserCode) {
         childEl(containerEl, 'p', { text: 'Enter this code on GitHub:' });
-        childEl(containerEl, 'div', {
+        const codeRow = childDiv(containerEl, { cls: 'github-publish-device-code-row' });
+        childEl(codeRow, 'div', {
           cls: 'github-publish-device-code',
           text: this.deviceUserCode,
+        });
+        addCopyButton(codeRow, this.deviceUserCode, {
+          ariaLabel: 'Copy device code',
+          successNotice: 'Device code copied to clipboard',
         });
         childEl(containerEl, 'p', { text: 'Waiting for authorization…' });
       } else {

@@ -23,18 +23,6 @@ export function fileExists(path: string): boolean {
   return asBoolean(nodeFs.existsSync(path));
 }
 
-export function ensureDirSync(dirPath: string): void {
-  nodeFs.mkdirSync(dirPath, { recursive: true });
-}
-
-export function writeTextFileSync(path: string, content: string): void {
-  nodeFs.writeFileSync(path, content, 'utf8');
-}
-
-export function writeBytesFileSync(path: string, content: Uint8Array): void {
-  nodeFs.writeFileSync(path, content);
-}
-
 export function decodeBase64(encoded: string): Uint8Array {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   const normalized = encoded.replace(/=+$/, '');

@@ -2,8 +2,3 @@ node_modules/
 dist/
 main.js
 data.json
-assets/.bundle-version
-plugin-dist/
-plugin-dist.zip
-Vault/
-plugin/

@@ -41,7 +41,7 @@ export async function runInitialPublish(
   contentFiles = ensureQuartzHomePage(contentFiles, config.siteName);
 
   onProgress({ phase: 'preparing', message: 'Loading publish toolchain…' });
-  assertPublishToolchainReady(pluginDir, pluginVersion);
+  assertPublishToolchainReady(pluginDir);
 
   onProgress({
     phase: 'creating-repo',

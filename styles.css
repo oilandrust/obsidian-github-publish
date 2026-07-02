@@ -61,6 +61,19 @@
   width: 100%;
 }
 
+.github-publish-device-code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  min-width: 0;
+}
+
+.github-publish-device-code-row .github-publish-device-code {
+  flex: 1;
+  margin: 0;
+}
+
 .github-publish-device-code {
   font-family: var(--font-monospace);
   font-size: 1.25rem;
