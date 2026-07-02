@@ -14,13 +14,8 @@ Checkout the Wiki of the project that is published with the Quartz template.
 
 [Example Wiki](https://oilandrust.github.io/githubpublish-wiki/)
 
-![Published site example (light theme)](Wiki/publish-example-light.png)
-
 ## Keep track of changes and publish your updated notes
 The plugin keeps track of your published sites, lets you know when there are changes, and lets you publish the latest notes with a click.
-
-![Site Status UI](Wiki/site-status-ui.png)
-
 
 ## Features
 
@@ -55,7 +50,7 @@ Download the latest release, then install into your vault:
 
 **From the Obsidian community store:** install as usual — publish toolchains are embedded in `main.js` and extracted on first run.
 
-**From a GitHub release:** `main.js`, `manifest.json`, and `styles.css` are enough for Quartz publishing. Optionally download `plugin-dist.zip` for a full folder layout.
+**From a GitHub release:** download `main.js`, `manifest.json`, and `styles.css` into your plugin folder. The Quartz toolchain is embedded in `main.js` and extracted on first run.
 
 **For development:** symlink or copy this repository into your vault (after `npm run build:plugin`):
 

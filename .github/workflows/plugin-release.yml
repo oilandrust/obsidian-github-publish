@@ -26,9 +26,6 @@ jobs:
       - name: Build plugin
         run: npm run build
 
-      - name: Package plugin archive
-        run: zip -r plugin-dist.zip manifest.json main.js styles.css assets
-
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -39,13 +36,12 @@ jobs:
             tag=$(node -p "require('./manifest.json').version")
           fi
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" manifest.json main.js styles.css plugin-dist.zip --clobber
+            gh release upload "$tag" manifest.json main.js styles.css --clobber
           else
             gh release create "$tag" \
               --title="$tag" \
               --notes="See [README](https://github.com/oilandrust/obsidian-github-publish#install) for install instructions." \
               manifest.json \
               main.js \
-              styles.css \
-              plugin-dist.zip
+              styles.css
           fi
