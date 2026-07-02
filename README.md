@@ -8,6 +8,8 @@ The plugin uses [Quartz](https://quartz.jzhao.xyz/) as a rendering engine and Gi
 - Select the folder you want to publish, and the name of the site
 - Profit!
 
+![Setup Demo](screenshots/setup_demo.gif)
+
 ## Live Demo
 
 Checkout the Wiki of the project that is published with the Quartz template.

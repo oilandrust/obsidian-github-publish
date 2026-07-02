@@ -11,6 +11,7 @@ import {
   upsertPublishedSite,
 } from '../sites';
 import { countDiffChanges } from './diffVault';
+import { repoActionsUrl } from '../github/actions';
 import { runInitialPublish } from './initialPublish';
 import { detectUnpublishedChanges, runPublishChanges } from './publishChanges';
 import { ProgressModal } from '../ui/ProgressModal';
@@ -75,6 +76,7 @@ export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): v
     },
     {
       mode: 'full',
+      actionsListUrl: repoActionsUrl(username, publishConfig.repoName),
       onFinished: () => plugin.clearSitePublishing(publishingId),
     },
   );
@@ -121,6 +123,7 @@ export function startPublishChanges(plugin: GitHubPublishHost, site: PublishedSi
     },
     {
       mode: 'incremental',
+      actionsListUrl: repoActionsUrl(site.owner, site.repo),
       onFinished: () => plugin.clearSitePublishing(site.id),
     },
   );

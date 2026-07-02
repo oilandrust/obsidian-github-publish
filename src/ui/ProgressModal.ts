@@ -1,5 +1,5 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
-import { pollWorkflowRun } from '../github/actions';
+import { pollWorkflowRun, repoActionsUrl } from '../github/actions';
 import { PublishResult } from '../publish/initialPublish';
 import { ProgressPhase, ProgressState } from '../settings';
 import { childDiv, childEl, childSpan, addCopyButton } from './dom';
@@ -9,6 +9,7 @@ export type ProgressModalMode = 'full' | 'incremental';
 export interface ProgressModalOptions {
   mode?: ProgressModalMode;
   onFinished?: () => void;
+  actionsListUrl?: string;
   /** Render a fixed state without running publish (development preview). */
   previewState?: ProgressState;
 }
@@ -20,6 +21,7 @@ export class ProgressModal extends Modal {
   };
   private lastActivePhase: ProgressPhase = 'preparing';
   private runningInBackground = false;
+  private actionsListUrl?: string;
 
   constructor(
     app: App,
@@ -31,6 +33,7 @@ export class ProgressModal extends Modal {
     private readonly options?: ProgressModalOptions,
   ) {
     super(app);
+    this.actionsListUrl = options?.actionsListUrl;
   }
 
   onOpen(): void {
@@ -83,6 +86,8 @@ export class ProgressModal extends Modal {
           this.render();
         }
       });
+
+      this.actionsListUrl = repoActionsUrl(result.owner, result.repo);
 
       this.state = {
         phase: 'waiting-build',
@@ -179,6 +184,7 @@ export class ProgressModal extends Modal {
         ? 'Publishing changes to GitHub Pages'
         : 'Publishing to GitHub Pages';
     childEl(contentEl, 'h2', { text: title });
+    this.renderSubtitle(contentEl);
 
     const steps = childDiv(contentEl, { cls: 'github-publish-steps' });
     const phases = this.getPhases();
@@ -258,6 +264,26 @@ export class ProgressModal extends Modal {
         this.close();
       }),
     );
+  }
+
+  private renderSubtitle(container: HTMLElement): void {
+    const subtitle = childDiv(container, { cls: 'github-publish-progress-subtitle' });
+    childEl(subtitle, 'p', {
+      text: 'It can take up to a few minutes, especially the first time.',
+    });
+
+    if (!this.actionsListUrl) {
+      return;
+    }
+
+    const linkRow = childDiv(subtitle, { cls: 'github-publish-actions-link-row' });
+    const link = childEl(linkRow, 'a', {
+      cls: 'github-publish-actions-link',
+      href: this.actionsListUrl,
+      text: 'monitor github actions',
+    });
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
   }
 
   private renderLiveUrlRow(container: HTMLElement, liveUrl: string): void {

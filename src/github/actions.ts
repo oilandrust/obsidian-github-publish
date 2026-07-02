@@ -13,6 +13,10 @@ interface WorkflowRunsResponse {
   workflow_runs: WorkflowRun[];
 }
 
+export function repoActionsUrl(owner: string, repo: string): string {
+  return `https://github.com/${owner}/${repo}/actions`;
+}
+
 export async function findWorkflowRunForCommit(
   token: string,
   owner: string,

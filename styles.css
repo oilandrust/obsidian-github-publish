@@ -2,6 +2,30 @@
   margin-top: 0;
 }
 
+.github-publish-progress-subtitle {
+  margin: -0.25rem 0 0.75rem;
+}
+
+.github-publish-progress-subtitle p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.github-publish-actions-link-row {
+  margin-top: 0.35rem;
+}
+
+.github-publish-actions-link {
+  font-size: 0.8em;
+  color: var(--text-faint);
+  text-decoration: none;
+}
+
+.github-publish-actions-link:hover {
+  color: var(--text-accent);
+  text-decoration: underline;
+}
+
 .github-publish-steps {
   display: flex;
   flex-direction: column;
