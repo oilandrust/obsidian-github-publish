@@ -1,26 +1,16 @@
-import { nodeFs, nodeZlib } from './nodeModules';
+import * as zlibImport from 'zlib';
 
-function asBoolean(value: unknown): boolean {
-  return value as boolean;
+interface NodeZlib {
+  gunzipSync(data: Uint8Array): Uint8Array;
 }
+
+const nodeZlib = zlibImport as unknown as NodeZlib;
 
 function asUint8Array(value: unknown): Uint8Array {
   if (!(value instanceof Uint8Array)) {
     throw new Error('Expected binary file contents');
   }
   return value;
-}
-
-export function readTextFile(path: string): string {
-  return nodeFs.readFileSync(path, 'utf8');
-}
-
-export function readBytesFile(path: string): Uint8Array {
-  return asUint8Array(nodeFs.readFileSync(path));
-}
-
-export function fileExists(path: string): boolean {
-  return asBoolean(nodeFs.existsSync(path));
 }
 
 export function decodeBase64(encoded: string): Uint8Array {

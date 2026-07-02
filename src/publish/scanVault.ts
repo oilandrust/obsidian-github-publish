@@ -27,17 +27,19 @@ export interface ScanResult {
   warnings: string[];
 }
 
-function configDirFolderName(vault: Vault): string {
-  const normalized = vault.configDir.replace(/\\/g, '/').replace(/\/$/, '');
-  const segment = normalized.split('/').filter(Boolean).pop();
-  return segment ?? '.obsidian';
+function normalizePath(path: string): string {
+  return path.replace(/\\/g, '/').replace(/\/$/, '');
 }
 
-function shouldExcludeDir(vault: Vault, dirName: string): boolean {
-  if (EXCLUDED_DIR_NAMES.has(dirName)) {
+function isConfigDir(vault: Vault, folder: TFolder): boolean {
+  return normalizePath(folder.path) === normalizePath(vault.configDir);
+}
+
+function shouldExcludeDir(vault: Vault, folder: TFolder): boolean {
+  if (EXCLUDED_DIR_NAMES.has(folder.name)) {
     return true;
   }
-  return dirName === configDirFolderName(vault);
+  return isConfigDir(vault, folder);
 }
 
 export async function scanVaultFolder(vault: Vault, folderPath: string): Promise<ScanResult> {
@@ -60,7 +62,7 @@ async function walkFolder(
 ): Promise<void> {
   for (const child of folder.children) {
     if (child instanceof TFolder) {
-      if (shouldExcludeDir(vault, child.name)) continue;
+      if (shouldExcludeDir(vault, child)) continue;
       await walkFolder(vault, child, rootPath, files, warnings);
       continue;
     }
@@ -107,7 +109,7 @@ export function countFilesInFolder(vault: Vault, folderPath: string): number {
   let count = 0;
   const walk = (node: TAbstractFile) => {
     if (node instanceof TFolder) {
-      if (shouldExcludeDir(vault, node.name)) return;
+      if (shouldExcludeDir(vault, node)) return;
       node.children.forEach(walk);
       return;
     }

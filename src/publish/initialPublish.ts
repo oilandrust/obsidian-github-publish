@@ -1,5 +1,4 @@
-import { App, normalizePath } from 'obsidian';
-import { FileSystemAdapter } from 'obsidian';
+import { App } from 'obsidian';
 import { enableGitHubPages } from '../github/pages';
 import { createInitialCommit, ensureRepositoryReadyForGit } from '../github/git';
 import { resolveRepository } from '../github/repos';
@@ -20,8 +19,6 @@ export interface PublishResult {
 
 export async function runInitialPublish(
   app: App,
-  pluginDir: string,
-  pluginVersion: string,
   token: string,
   username: string,
   config: SetupConfig,
@@ -41,7 +38,7 @@ export async function runInitialPublish(
   contentFiles = ensureQuartzHomePage(contentFiles, config.siteName);
 
   onProgress({ phase: 'preparing', message: 'Loading publish toolchain…' });
-  assertPublishToolchainReady(pluginDir);
+  assertPublishToolchainReady();
 
   onProgress({
     phase: 'creating-repo',
@@ -59,7 +56,7 @@ export async function runInitialPublish(
   }
 
   const bundleContext = publishBundleContextFromConfig(config, owner);
-  const toolchainFiles = loadPublishToolchainFiles(pluginDir, bundleContext);
+  const toolchainFiles = loadPublishToolchainFiles(bundleContext);
   const allFiles: RepoFile[] = sortUploadFiles([...toolchainFiles, ...contentFiles]);
   log(`Prepared ${contentFiles.length} content files and ${toolchainFiles.length} toolchain files`, {
     fileCount: allFiles.length,
@@ -114,18 +111,4 @@ export async function runInitialPublish(
 
 function sortUploadFiles(files: RepoFile[]): RepoFile[] {
   return [...files].sort((a, b) => a.path.localeCompare(b.path));
-}
-
-export function getPluginDir(app: App, pluginId: string): string {
-  const adapter = app.vault.adapter;
-  if (!(adapter instanceof FileSystemAdapter)) {
-    throw new Error('GitHub Publish requires the desktop app.');
-  }
-  const basePath: string = adapter.getBasePath();
-  const configDir: string = app.vault.configDir;
-  return normalizePath(pathJoin(basePath, configDir, 'plugins', pluginId));
-}
-
-function pathJoin(...parts: string[]): string {
-  return parts.join('/').replace(/\\/g, '/');
 }

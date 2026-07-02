@@ -1,14 +1,8 @@
-import { nodePath } from './nodeModules';
-
-/** Typed wrapper — contains Node path inference for community ESLint scans. */
-export function joinPath(...segments: string[]): string {
-  return nodePath.join(...segments);
-}
-
 export function extname(filePath: string): string {
-  return nodePath.extname(filePath);
-}
-
-export function dirname(filePath: string): string {
-  return nodePath.dirname(filePath);
+  const name = filePath.split(/[/\\]/).pop() ?? filePath;
+  const index = name.lastIndexOf('.');
+  if (index <= 0) {
+    return '';
+  }
+  return name.slice(index);
 }

@@ -35,8 +35,8 @@ function isTextFile(relativePath: string): boolean {
   return TEXT_EXTENSIONS.has(extname(relativePath));
 }
 
-function readRepoFile(pluginDir: string, relativePath: string): RepoFile {
-  const content = readToolchainBytes(pluginDir, relativePath);
+function readRepoFile(relativePath: string): RepoFile {
+  const content = readToolchainBytes(relativePath);
   return {
     path: relativePath,
     content,
@@ -74,18 +74,18 @@ function pushTemplatedFile(
   });
 }
 
-function loadQuartzToolchain(pluginDir: string, context: PublishBundleContext): RepoFile[] {
-  const filePaths = loadToolchainManifest(pluginDir);
+function loadQuartzToolchain(context: PublishBundleContext): RepoFile[] {
+  const filePaths = loadToolchainManifest();
   const files: RepoFile[] = [];
 
   for (const relativePath of filePaths) {
     if (relativePath.endsWith('.template')) {
-      const raw = readToolchainText(pluginDir, relativePath);
+      const raw = readToolchainText(relativePath);
       pushTemplatedFile(files, relativePath, raw, context);
       continue;
     }
 
-    const file = readRepoFile(pluginDir, relativePath);
+    const file = readRepoFile(relativePath);
     if (file.encoding === 'utf-8') {
       const templated = applyTemplate(new TextDecoder().decode(file.content), context);
       files.push({
@@ -101,15 +101,12 @@ function loadQuartzToolchain(pluginDir: string, context: PublishBundleContext): 
   return files;
 }
 
-export function assertPublishToolchainReady(pluginDir: string): void {
-  assertQuartzToolchainAvailable(pluginDir);
+export function assertPublishToolchainReady(): void {
+  assertQuartzToolchainAvailable();
 }
 
-export function loadPublishToolchainFiles(
-  pluginDir: string,
-  context: PublishBundleContext,
-): RepoFile[] {
-  return loadQuartzToolchain(pluginDir, context);
+export function loadPublishToolchainFiles(context: PublishBundleContext): RepoFile[] {
+  return loadQuartzToolchain(context);
 }
 
 export function publishBundleContextFromConfig(

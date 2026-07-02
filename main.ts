@@ -11,7 +11,6 @@ import { SetupModal } from './src/ui/SetupModal';
 import { PublishedSiteCard } from './src/ui/PublishedSiteCard';
 import { SitePickerModal } from './src/ui/SitePickerModal';
 import { ProgressModal } from './src/ui/ProgressModal';
-import { getPluginDir } from './src/publish/initialPublish';
 import {
   getPublishableSites,
   startPublish,
@@ -67,14 +66,6 @@ export default class GitHubPublishPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
-  }
-
-  getPluginDir(): string {
-    return getPluginDir(this.app, this.manifest.id);
-  }
-
-  getPluginVersion(): string {
-    return this.manifest.version;
   }
 
   async setAccessToken(token: string) {

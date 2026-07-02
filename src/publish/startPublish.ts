@@ -49,15 +49,12 @@ export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): v
 
   plugin.markSitePublishing(publishingId);
 
-  const pluginDir = plugin.getPluginDir();
   const progress = new ProgressModal(
     plugin.app,
     token,
     (onProgress) =>
       runInitialPublish(
         plugin.app,
-        pluginDir,
-        plugin.getPluginVersion(),
         token,
         username,
         publishConfig,
