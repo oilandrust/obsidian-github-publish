@@ -1,9 +1,14 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as zlib from 'zlib';
 import { EMBEDDED_ASSETS_BUNDLE } from './embeddedAssets';
-import { fileExists, readTextFile } from '../utils/fs';
-
+import {
+  decodeBase64,
+  ensureDirSync,
+  fileExists,
+  gunzipToUtf8,
+  readTextFile,
+  writeBytesFileSync,
+  writeTextFileSync,
+} from '../utils/fs';
+import { dirname, joinPath } from '../utils/path';
 import { parseJson } from '../utils/json';
 
 interface EmbeddedFile {
@@ -16,20 +21,20 @@ interface EmbeddedBundle {
   files: EmbeddedFile[];
 }
 
-const VERSION_MARKER = path.join('assets', '.bundle-version');
-const QUARTZ_MANIFEST = path.join('assets', 'toolchain-quartz', 'manifest.json');
+const VERSION_MARKER = 'assets/.bundle-version';
+const QUARTZ_MANIFEST = 'assets/toolchain-quartz/manifest.json';
 
 function needsExtract(pluginDir: string, pluginVersion: string): boolean {
   if (!EMBEDDED_ASSETS_BUNDLE) {
     return false;
   }
 
-  const quartzManifest = path.join(pluginDir, QUARTZ_MANIFEST);
+  const quartzManifest = joinPath(pluginDir, QUARTZ_MANIFEST);
   if (!fileExists(quartzManifest)) {
     return true;
   }
 
-  const versionPath = path.join(pluginDir, VERSION_MARKER);
+  const versionPath = joinPath(pluginDir, VERSION_MARKER);
   if (!fileExists(versionPath)) {
     return true;
   }
@@ -43,19 +48,19 @@ function needsExtract(pluginDir: string, pluginVersion: string): boolean {
 }
 
 function decodeBundle(): EmbeddedBundle {
-  const compressed = Buffer.from(EMBEDDED_ASSETS_BUNDLE, 'base64');
-  const json = zlib.gunzipSync(compressed).toString('utf8');
+  const compressed = decodeBase64(EMBEDDED_ASSETS_BUNDLE);
+  const json = gunzipToUtf8(compressed);
   return parseJson<EmbeddedBundle>(json);
 }
 
 function writeEmbeddedFile(pluginDir: string, file: EmbeddedFile): void {
-  const absolute = path.join(pluginDir, 'assets', file.path);
-  fs.mkdirSync(path.dirname(absolute), { recursive: true });
+  const absolute = joinPath(pluginDir, 'assets', file.path);
+  ensureDirSync(dirname(absolute));
   if (file.encoding === 'utf8') {
-    fs.writeFileSync(absolute, file.data, 'utf8');
+    writeTextFileSync(absolute, file.data);
     return;
   }
-  fs.writeFileSync(absolute, Buffer.from(file.data, 'base64'));
+  writeBytesFileSync(absolute, decodeBase64(file.data));
 }
 
 export function ensureEmbeddedAssetsExtracted(pluginDir: string, pluginVersion: string): void {
@@ -68,7 +73,7 @@ export function ensureEmbeddedAssetsExtracted(pluginDir: string, pluginVersion: 
     writeEmbeddedFile(pluginDir, file);
   }
 
-  const versionPath = path.join(pluginDir, VERSION_MARKER);
-  fs.mkdirSync(path.dirname(versionPath), { recursive: true });
-  fs.writeFileSync(versionPath, `${pluginVersion}\n`, 'utf8');
+  const versionPath = joinPath(pluginDir, VERSION_MARKER);
+  ensureDirSync(dirname(versionPath));
+  writeTextFileSync(versionPath, `${pluginVersion}\n`);
 }

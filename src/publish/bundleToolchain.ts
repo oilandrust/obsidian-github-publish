@@ -1,7 +1,7 @@
-import * as path from 'path';
 import { resolveQuartzCommitSha } from '../quartz/versions';
 import { RepoFile, SetupConfig } from '../settings';
 import { fileExists, readBytesFile, readTextFile } from '../utils/fs';
+import { extname, joinPath } from '../utils/path';
 import { parseJson } from '../utils/json';
 import { ensureEmbeddedAssetsExtracted } from '../toolchain/extractEmbeddedAssets';
 
@@ -35,8 +35,7 @@ function isTextFile(relativePath: string): boolean {
   if (relativePath.endsWith('.template')) {
     return true;
   }
-  const ext: string = path.extname(relativePath);
-  return TEXT_EXTENSIONS.has(ext);
+  return TEXT_EXTENSIONS.has(extname(relativePath));
 }
 
 function toolchainMissingMessage(toolchainDir: string): string {
@@ -49,7 +48,7 @@ function toolchainMissingMessage(toolchainDir: string): string {
 }
 
 function loadManifestFiles(toolchainDir: string): string[] {
-  const manifestPath: string = path.join(toolchainDir, 'manifest.json');
+  const manifestPath = joinPath(toolchainDir, 'manifest.json');
   if (!fileExists(manifestPath)) {
     throw new Error(toolchainMissingMessage(toolchainDir));
   }
@@ -59,8 +58,8 @@ function loadManifestFiles(toolchainDir: string): string[] {
 }
 
 function readRepoFile(toolchainDir: string, relativePath: string): RepoFile {
-  const absolute: string = path.join(toolchainDir, relativePath);
-  const content: Buffer = readBytesFile(absolute);
+  const absolute = joinPath(toolchainDir, relativePath);
+  const content = readBytesFile(absolute);
   return {
     path: relativePath,
     content,
@@ -104,7 +103,7 @@ function loadQuartzToolchain(toolchainDir: string, context: PublishBundleContext
 
   for (const relativePath of filePaths) {
     if (relativePath.endsWith('.template')) {
-      const raw = readTextFile(path.join(toolchainDir, relativePath));
+      const raw = readTextFile(joinPath(toolchainDir, relativePath));
       pushTemplatedFile(files, relativePath, raw, context);
       continue;
     }
@@ -127,7 +126,7 @@ function loadQuartzToolchain(toolchainDir: string, context: PublishBundleContext
 
 export function assertPublishToolchainReady(pluginDir: string, pluginVersion: string): void {
   ensureEmbeddedAssetsExtracted(pluginDir, pluginVersion);
-  const toolchainDir: string = path.join(pluginDir, 'assets', TOOLCHAIN_DIR_NAME);
+  const toolchainDir = joinPath(pluginDir, 'assets', TOOLCHAIN_DIR_NAME);
   loadManifestFiles(toolchainDir);
 }
 
@@ -135,7 +134,7 @@ export function loadPublishToolchainFiles(
   pluginDir: string,
   context: PublishBundleContext,
 ): RepoFile[] {
-  const toolchainDir: string = path.join(pluginDir, 'assets', TOOLCHAIN_DIR_NAME);
+  const toolchainDir = joinPath(pluginDir, 'assets', TOOLCHAIN_DIR_NAME);
   return loadQuartzToolchain(toolchainDir, context);
 }
 
