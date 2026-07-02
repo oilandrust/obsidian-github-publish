@@ -1,5 +1,4 @@
 import { Notice } from 'obsidian';
-import type { DomElementInfo } from 'obsidian';
 
 type DomOpts = DomElementInfo | string;
 

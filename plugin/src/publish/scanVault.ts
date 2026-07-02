@@ -1,4 +1,4 @@
-import { TAbstractFile, TFile, TFolder, Vault } from 'obsidian';
+import { TAbstractFile, TFolder, Vault } from 'obsidian';
 import { RepoFile } from '../settings';
 import {
   asFile,

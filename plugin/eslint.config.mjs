@@ -31,6 +31,7 @@ export default [
     rules: {
       ...(obsidianmd.configs.recommended[0]?.rules ?? {}),
       ...(obsidianmd.configs.recommended[16]?.rules ?? {}),
+      'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
