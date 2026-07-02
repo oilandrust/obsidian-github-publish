@@ -5,7 +5,7 @@ type DomOpts = DomElementInfo | string;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 function appendCopyIcon(button: HTMLButtonElement): void {
-  const svg = document.createElementNS(SVG_NS, 'svg');
+  const svg = activeDocument.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('width', '16');
   svg.setAttribute('height', '16');
   svg.setAttribute('viewBox', '0 0 24 24');
@@ -15,7 +15,7 @@ function appendCopyIcon(button: HTMLButtonElement): void {
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
 
-  const rect = document.createElementNS(SVG_NS, 'rect');
+  const rect = activeDocument.createElementNS(SVG_NS, 'rect');
   rect.setAttribute('width', '14');
   rect.setAttribute('height', '14');
   rect.setAttribute('x', '8');
@@ -24,7 +24,7 @@ function appendCopyIcon(button: HTMLButtonElement): void {
   rect.setAttribute('ry', '2');
   svg.appendChild(rect);
 
-  const path = document.createElementNS(SVG_NS, 'path');
+  const path = activeDocument.createElementNS(SVG_NS, 'path');
   path.setAttribute('d', 'M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2');
   svg.appendChild(path);
 
@@ -32,7 +32,7 @@ function appendCopyIcon(button: HTMLButtonElement): void {
 }
 
 function appendTrashIcon(button: HTMLButtonElement): void {
-  const svg = document.createElementNS(SVG_NS, 'svg');
+  const svg = activeDocument.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('width', '16');
   svg.setAttribute('height', '16');
   svg.setAttribute('viewBox', '0 0 24 24');
@@ -42,18 +42,18 @@ function appendTrashIcon(button: HTMLButtonElement): void {
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
 
-  const path = document.createElementNS(SVG_NS, 'path');
+  const path = activeDocument.createElementNS(SVG_NS, 'path');
   path.setAttribute('d', 'M3 6h18');
   svg.appendChild(path);
 
-  const path2 = document.createElementNS(SVG_NS, 'path');
+  const path2 = activeDocument.createElementNS(SVG_NS, 'path');
   path2.setAttribute(
     'd',
     'M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6',
   );
   svg.appendChild(path2);
 
-  const path3 = document.createElementNS(SVG_NS, 'path');
+  const path3 = activeDocument.createElementNS(SVG_NS, 'path');
   path3.setAttribute('d', 'M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2');
   svg.appendChild(path3);
 

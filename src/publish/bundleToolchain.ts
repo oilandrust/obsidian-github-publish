@@ -48,7 +48,7 @@ function toolchainMissingMessage(toolchainDir: string): string {
 }
 
 function loadManifestFiles(toolchainDir: string): string[] {
-  const manifestPath = joinPath(toolchainDir, 'manifest.json');
+  const manifestPath = joinPath(toolchainDir, 'files.json');
   if (!fileExists(manifestPath)) {
     throw new Error(toolchainMissingMessage(toolchainDir));
   }

@@ -1,4 +1,4 @@
-import { githubFormRequest, githubRequest, GitHubUser } from './client';
+import { githubFormRequest, githubRequest, GitHubUser, sleep } from './client';
 
 const DEVICE_CODE_URL = 'https://github.com/login/device/code';
 const ACCESS_TOKEN_URL = 'https://github.com/login/oauth/access_token';
@@ -69,8 +69,4 @@ export async function pollAccessToken(
 
 export async function fetchGitHubUser(token: string): Promise<GitHubUser> {
   return githubRequest<GitHubUser>(token, 'GET', '/user');
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

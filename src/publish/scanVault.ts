@@ -7,7 +7,7 @@ import {
   readVaultBinary,
 } from '../utils/vault';
 
-const EXCLUDED_DIRS = new Set(['.git', '.obsidian', 'node_modules']);
+const EXCLUDED_DIR_NAMES = new Set(['.git', 'node_modules']);
 const EXCLUDED_FILES = new Set(['.DS_Store']);
 const SKIPPED_EXTENSIONS = new Set(['.canvas']);
 
@@ -25,6 +25,19 @@ const INCLUDED_EXTENSIONS = new Set([
 export interface ScanResult {
   files: RepoFile[];
   warnings: string[];
+}
+
+function configDirFolderName(vault: Vault): string {
+  const normalized = vault.configDir.replace(/\\/g, '/').replace(/\/$/, '');
+  const segment = normalized.split('/').filter(Boolean).pop();
+  return segment ?? '.obsidian';
+}
+
+function shouldExcludeDir(vault: Vault, dirName: string): boolean {
+  if (EXCLUDED_DIR_NAMES.has(dirName)) {
+    return true;
+  }
+  return dirName === configDirFolderName(vault);
 }
 
 export async function scanVaultFolder(vault: Vault, folderPath: string): Promise<ScanResult> {
@@ -47,7 +60,7 @@ async function walkFolder(
 ): Promise<void> {
   for (const child of folder.children) {
     if (child instanceof TFolder) {
-      if (EXCLUDED_DIRS.has(child.name)) continue;
+      if (shouldExcludeDir(vault, child.name)) continue;
       await walkFolder(vault, child, rootPath, files, warnings);
       continue;
     }
@@ -94,7 +107,7 @@ export function countFilesInFolder(vault: Vault, folderPath: string): number {
   let count = 0;
   const walk = (node: TAbstractFile) => {
     if (node instanceof TFolder) {
-      if (EXCLUDED_DIRS.has(node.name)) return;
+      if (shouldExcludeDir(vault, node.name)) return;
       node.children.forEach(walk);
       return;
     }

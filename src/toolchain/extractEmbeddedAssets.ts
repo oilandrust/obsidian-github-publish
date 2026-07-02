@@ -22,7 +22,7 @@ interface EmbeddedBundle {
 }
 
 const VERSION_MARKER = 'assets/.bundle-version';
-const QUARTZ_MANIFEST = 'assets/toolchain-quartz/manifest.json';
+const QUARTZ_MANIFEST = 'assets/toolchain-quartz/files.json';
 
 function needsExtract(pluginDir: string, pluginVersion: string): boolean {
   if (!EMBEDDED_ASSETS_BUNDLE) {

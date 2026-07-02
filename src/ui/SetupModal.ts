@@ -92,7 +92,7 @@ export class SetupModal extends Modal {
     this.keydownHandler = (event: KeyboardEvent) => {
       this.handleWizardKeydown(event);
     };
-    document.addEventListener('keydown', this.keydownHandler, true);
+    activeDocument.addEventListener('keydown', this.keydownHandler, true);
     this.render();
   }
 
@@ -136,7 +136,7 @@ export class SetupModal extends Modal {
   onClose(): void {
     this.clearRepoNameCheckTimer();
     if (this.keydownHandler) {
-      document.removeEventListener('keydown', this.keydownHandler, true);
+      activeDocument.removeEventListener('keydown', this.keydownHandler, true);
       this.keydownHandler = null;
     }
     this.contentEl.empty();

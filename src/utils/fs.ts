@@ -1,9 +1,4 @@
-import * as fs from 'fs';
-import * as zlib from 'zlib';
-
-function asString(value: unknown): string {
-  return value as string;
-}
+import { nodeFs, nodeZlib } from './nodeModules';
 
 function asBoolean(value: unknown): boolean {
   return value as boolean;
@@ -17,42 +12,55 @@ function asUint8Array(value: unknown): Uint8Array {
 }
 
 export function readTextFile(path: string): string {
-  const data: unknown = fs.readFileSync(path, 'utf8');
-  return asString(data);
+  return nodeFs.readFileSync(path, 'utf8');
 }
 
 export function readBytesFile(path: string): Uint8Array {
-  const data: unknown = fs.readFileSync(path);
-  return asUint8Array(data);
+  return asUint8Array(nodeFs.readFileSync(path));
 }
 
 export function fileExists(path: string): boolean {
-  const exists: unknown = fs.existsSync(path);
-  return asBoolean(exists);
+  return asBoolean(nodeFs.existsSync(path));
 }
 
 export function ensureDirSync(dirPath: string): void {
-  fs.mkdirSync(dirPath, { recursive: true });
+  nodeFs.mkdirSync(dirPath, { recursive: true });
 }
 
 export function writeTextFileSync(path: string, content: string): void {
-  fs.writeFileSync(path, content, 'utf8');
+  nodeFs.writeFileSync(path, content, 'utf8');
 }
 
 export function writeBytesFileSync(path: string, content: Uint8Array): void {
-  fs.writeFileSync(path, content);
+  nodeFs.writeFileSync(path, content);
 }
 
 export function decodeBase64(encoded: string): Uint8Array {
-  const binary = globalThis.atob(encoded);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const normalized = encoded.replace(/=+$/, '');
+  const bytes = new Uint8Array(Math.floor((normalized.length * 3) / 4));
+  let byteIndex = 0;
+  let bits = 0;
+  let bitCount = 0;
+
+  for (const char of normalized) {
+    const value = alphabet.indexOf(char);
+    if (value < 0) {
+      continue;
+    }
+    bits = (bits << 6) | value;
+    bitCount += 6;
+    if (bitCount >= 8) {
+      bitCount -= 8;
+      bytes[byteIndex] = (bits >> bitCount) & 0xff;
+      byteIndex++;
+    }
   }
-  return bytes;
+
+  return bytes.subarray(0, byteIndex);
 }
 
 export function gunzipToUtf8(data: Uint8Array): string {
-  const decompressed: unknown = zlib.gunzipSync(data);
+  const decompressed = nodeZlib.gunzipSync(data);
   return new TextDecoder().decode(asUint8Array(decompressed));
 }

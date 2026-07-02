@@ -52,7 +52,8 @@ function applyTemplate(content, context) {
 }
 
 function loadToolchainFiles(context) {
-  const manifest = JSON.parse(fs.readFileSync(path.join(TOOLCHAIN_DIR, 'manifest.json'), 'utf8'));
+  const manifestData = JSON.parse(fs.readFileSync(path.join(TOOLCHAIN_DIR, 'files.json'), 'utf8'));
+  const manifest = Array.isArray(manifestData) ? manifestData : manifestData.files ?? [];
   const files = [];
 
   for (const relativePath of manifest) {

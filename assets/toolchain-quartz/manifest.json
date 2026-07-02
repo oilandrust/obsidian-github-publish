@@ -1,7 +1,0 @@
-[
-  ".github-publish/site.json.template",
-  ".github/workflows/deploy.yml",
-  ".gitignore",
-  "quartz.config.yaml",
-  "quartz.lock.json"
-]

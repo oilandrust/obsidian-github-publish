@@ -27,6 +27,11 @@ export default [
         project: './tsconfig.json',
         sourceType: 'module',
       },
+      globals: {
+        activeDocument: 'readonly',
+        activeWindow: 'readonly',
+        DomElementInfo: 'readonly',
+      },
     },
     rules: {
       ...(obsidianmd.configs.recommended[0]?.rules ?? {}),

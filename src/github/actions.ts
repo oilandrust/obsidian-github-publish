@@ -1,4 +1,4 @@
-import { githubRequest } from './client';
+import { githubRequest, sleep } from './client';
 
 export interface WorkflowRun {
   id: number;
@@ -67,8 +67,4 @@ export async function pollWorkflowRun(
   }
 
   throw new Error('Timed out waiting for GitHub Actions to complete (15 minute limit).');
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

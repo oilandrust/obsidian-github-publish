@@ -36,7 +36,7 @@ function walkFiles(dir, relative = '') {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       files.push(...walkFiles(full, rel));
-    } else if (entry.name !== 'manifest.json') {
+    } else if (entry.name !== 'files.json') {
       files.push(rel);
     }
   }
@@ -66,9 +66,9 @@ function buildToolchainBundle(toolchainName) {
 
   const manifestPaths = relativeFiles.map((rel) => rel.replace(/\\/g, '/'));
   entries.push({
-    path: `${toolchainName}/manifest.json`,
+    path: `${toolchainName}/files.json`,
     encoding: 'utf8',
-    data: `${JSON.stringify(manifestPaths, null, 2)}\n`,
+    data: `${JSON.stringify({ files: manifestPaths }, null, 2)}\n`,
   });
 
   return entries;

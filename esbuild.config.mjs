@@ -1,5 +1,5 @@
 import esbuild from 'esbuild';
-import builtinModules from 'builtin-modules';
+import { builtinModules } from 'node:module';
 import { execSync } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';

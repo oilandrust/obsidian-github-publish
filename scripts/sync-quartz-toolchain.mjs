@@ -167,15 +167,15 @@ try {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         walkManifest(full, rel);
-      } else if (entry.name !== 'manifest.json') {
+      } else if (entry.name !== 'files.json') {
         manifest.push(rel);
       }
     }
   }
   walkManifest(OUT);
   fs.writeFileSync(
-    path.join(OUT, 'manifest.json'),
-    JSON.stringify(manifest.sort(), null, 2),
+    path.join(OUT, 'files.json'),
+    JSON.stringify({ files: manifest.sort() }, null, 2),
   );
 
   console.log(`Synced Quartz toolchain to ${OUT} (${manifest.length} files)`);
