@@ -10,8 +10,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const PLUGIN_DIR = path.join(ROOT, 'plugin');
-const TOOLCHAIN_DIR = path.join(PLUGIN_DIR, 'assets', 'toolchain-quartz');
+const TOOLCHAIN_DIR = path.join(ROOT, 'assets', 'toolchain-quartz');
 const DEFAULT_QUARTZ_COMMIT = '9cf87ff1c248a8ca551093214b0fec3b31415009';
 
 const SITES = {

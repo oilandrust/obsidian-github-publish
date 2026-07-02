@@ -1,5 +1,9 @@
 node_modules/
 dist/
-plugin/node_modules/
-plugin/main.js
-plugin/data.json
+main.js
+data.json
+assets/.bundle-version
+plugin-dist/
+plugin-dist.zip
+Vault/
+plugin/

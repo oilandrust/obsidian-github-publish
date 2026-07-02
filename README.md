@@ -57,7 +57,13 @@ Download the latest release, then install into your vault:
 
 **From a GitHub release:** `main.js`, `manifest.json`, and `styles.css` are enough for Quartz publishing. Optionally download `plugin-dist.zip` for a full folder layout.
 
-**For development:** symlink or copy the whole `plugin/` folder from this repository (after `npm run build:plugin`).
+**For development:** symlink or copy this repository into your vault (after `npm run build:plugin`):
+
+```
+<vault>/.obsidian/plugins/github-publish/
+```
+
+The folder should contain `manifest.json`, `main.js`, and `styles.css`.
 
 ## Usage
 
@@ -91,9 +97,13 @@ npm run build:plugin
 | `npm run build:plugin` | Sync Quartz toolchain and build the plugin |
 | `npm run build:plugin:advanced` | Build with Quartz version controls in settings |
 | `npm run sync:toolchain` | Refresh bundled Quartz toolchain |
-| `npm run build` | Plugin only (assumes toolchains already synced) |
+| `npm run build` | Plugin only (assumes toolchain already synced) |
+| `npm run lint` | Run ESLint |
+| `npm run dev` | Watch mode for plugin development |
 
-More detail: [plugin/README.md](plugin/README.md).
+### Debugging
+
+Open Obsidian's developer console (`Cmd+Option+I` on macOS, `Ctrl+Shift+I` on Windows/Linux) and filter by `GitHub Publish` for API logs and errors.
 
 ## License
 

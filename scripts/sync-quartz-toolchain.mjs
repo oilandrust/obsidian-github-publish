@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'plugin', 'assets', 'toolchain-quartz');
+const OUT = path.join(ROOT, 'assets', 'toolchain-quartz');
 const DEFAULT_QUARTZ_COMMIT =
   process.env.QUARTZ_COMMIT_SHA ?? '9cf87ff1c248a8ca551093214b0fec3b31415009';
 
