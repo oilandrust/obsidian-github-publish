@@ -71,6 +71,10 @@ export function updatePublishedSite(
   return sites.map((site) => (site.id === id ? { ...site, ...update } : site));
 }
 
+export function removePublishedSite(sites: PublishedSite[], id: string): PublishedSite[] {
+  return sites.filter((site) => site.id !== id);
+}
+
 export function migratePluginSettings(raw: LegacyPluginSettings): PluginSettings {
   const settings: PluginSettings = {
     accessToken: raw.accessToken ?? null,

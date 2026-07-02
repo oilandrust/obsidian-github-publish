@@ -4,9 +4,10 @@ import { connectGitHub } from './src/github/connect';
 import {
   DEFAULT_SETTINGS,
   PluginSettings,
+  PublishedSite,
   TemplateEngine,
 } from './src/settings';
-import { migratePluginSettings } from './src/sites';
+import { migratePluginSettings, removePublishedSite } from './src/sites';
 import { SetupModal } from './src/ui/SetupModal';
 import { PublishedSiteCard } from './src/ui/PublishedSiteCard';
 import { SitePickerModal } from './src/ui/SitePickerModal';
@@ -114,6 +115,11 @@ export default class GitHubPublishPlugin extends Plugin {
       new Notice('Connect to GitHub in plugin settings first.');
       return;
     }
+    if (this.settings.savedSetup) {
+      this.settings.savedSetup = null;
+      void this.saveSettings();
+      this.refreshSettingsTab();
+    }
     new SetupModal(this.app, this).open();
   }
 
@@ -133,6 +139,13 @@ export default class GitHubPublishPlugin extends Plugin {
     new SitePickerModal(this.app, sites, (site) => {
       startPublishChanges(this, site);
     }).open();
+  }
+
+  async untrackPublishedSite(site: PublishedSite): Promise<void> {
+    this.settings.publishedSites = removePublishedSite(this.settings.publishedSites, site.id);
+    await this.saveSettings();
+    this.refreshSettingsTab();
+    new Notice(`Stopped tracking ${site.siteName}`);
   }
 }
 
@@ -246,6 +259,9 @@ class GitHubPublishSettingTab extends PluginSettingTab {
           site,
           isStale,
           (selected) => startPublishChanges(this.plugin, selected),
+          (selected) => {
+            void this.plugin.untrackPublishedSite(selected);
+          },
         ).render(sitesContainer);
       }
     } else {

@@ -32,6 +32,35 @@ function appendCopyIcon(button: HTMLButtonElement): void {
   button.appendChild(svg);
 }
 
+function appendTrashIcon(button: HTMLButtonElement): void {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('width', '16');
+  svg.setAttribute('height', '16');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+
+  const path = document.createElementNS(SVG_NS, 'path');
+  path.setAttribute('d', 'M3 6h18');
+  svg.appendChild(path);
+
+  const path2 = document.createElementNS(SVG_NS, 'path');
+  path2.setAttribute(
+    'd',
+    'M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6',
+  );
+  svg.appendChild(path2);
+
+  const path3 = document.createElementNS(SVG_NS, 'path');
+  path3.setAttribute('d', 'M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2');
+  svg.appendChild(path3);
+
+  button.appendChild(svg);
+}
+
 function asElement<T extends HTMLElement>(value: unknown): T {
   return value as T;
 }
@@ -73,4 +102,17 @@ export function addCopyButton(
     );
   });
   return copyBtn;
+}
+
+export function addTrashButton(
+  host: HTMLElement,
+  options: { ariaLabel?: string; onClick: () => void },
+): HTMLButtonElement {
+  const trashBtn = childEl(host, 'button', {
+    cls: 'clickable-icon github-publish-untrack-button',
+  });
+  trashBtn.setAttr('aria-label', options.ariaLabel ?? 'Stop tracking site');
+  appendTrashIcon(trashBtn);
+  trashBtn.addEventListener('click', options.onClick);
+  return trashBtn;
 }

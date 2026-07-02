@@ -10,7 +10,8 @@ import {
 } from '../quartz/versions';
 import { showAdvancedSettings } from '../buildFlags';
 import { GitHubPublishHost } from '../pluginHost';
-import { childDiv, childEl, childSpan } from './dom';
+import { childDiv, childEl, childSpan, addTrashButton } from './dom';
+import { UntrackSiteModal } from './UntrackSiteModal';
 
 export class PublishedSiteCard {
   constructor(
@@ -19,6 +20,7 @@ export class PublishedSiteCard {
     private readonly site: PublishedSite,
     private readonly isStale: () => boolean,
     private readonly onPublishChanges: (site: PublishedSite) => void,
+    private readonly onUntrack: (site: PublishedSite) => void,
   ) {}
 
   render(container: HTMLElement): void {
@@ -27,7 +29,16 @@ export class PublishedSiteCard {
     const token = this.plugin.settings.accessToken;
 
     const card = childDiv(container, { cls: 'github-publish-site-card' });
-    childEl(card, 'h4', { text: this.site.siteName });
+    const header = childDiv(card, { cls: 'github-publish-site-card-header' });
+    childEl(header, 'h4', { text: this.site.siteName });
+    addTrashButton(header, {
+      ariaLabel: `Stop tracking ${this.site.siteName}`,
+      onClick: () => {
+        new UntrackSiteModal(this.app, this.site, () => {
+          this.onUntrack(this.site);
+        }).open();
+      },
+    });
 
     const summary = childEl(card, 'dl', { cls: 'github-publish-summary' });
     this.addSummaryRow(summary, 'Vault folder', this.site.contentFolder);

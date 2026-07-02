@@ -37,6 +37,15 @@
   color: var(--text-error);
 }
 
+.github-publish-repo-availability {
+  margin: -0.25rem 0 0.75rem;
+}
+
+.github-publish-repo-availability-message {
+  color: var(--text-muted);
+  margin: 0;
+}
+
 .github-publish-field {
   margin: 1rem 0;
 }
@@ -279,6 +288,33 @@
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   padding: 1rem;
+}
+
+.github-publish-site-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.github-publish-site-card-header h4 {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.github-publish-untrack-button {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.github-publish-untrack-repo-link {
+  margin: 0.75rem 0 1rem;
+}
+
+.github-publish-untrack-repo-link a {
+  font-weight: 600;
 }
 
 .github-publish-site-card h4 {

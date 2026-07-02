@@ -8,19 +8,5 @@
   "scripts/lib/resolve-asset.mjs",
   "scripts/lib/scan-content.mjs",
   "scripts/sync-quartz-toolchain.mjs",
-  "scripts/sync-toolchain.mjs",
-  "template/index.html",
-  "template/package-lock.json",
-  "template/package.json",
-  "template/src/App.tsx",
-  "template/src/components/ContentView.tsx",
-  "template/src/components/FileTree.tsx",
-  "template/src/components/Layout.tsx",
-  "template/src/main.tsx",
-  "template/src/styles/obsidian.css",
-  "template/src/types.ts",
-  "template/src/vite-env.d.ts",
-  "template/tsconfig.json",
-  "template/tsconfig.node.json",
-  "template/vite.config.ts"
+  "scripts/sync-toolchain.mjs"
 ]

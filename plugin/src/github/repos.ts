@@ -88,6 +88,22 @@ export async function getRepo(
   return githubRequest<GitHubRepo>(token, 'GET', `/repos/${owner}/${repo}`);
 }
 
+export async function userRepoExists(
+  token: string,
+  username: string,
+  repoName: string,
+): Promise<boolean> {
+  try {
+    await getRepo(token, username, repoName);
+    return true;
+  } catch (error: unknown) {
+    if (error instanceof GitHubApiError && error.status === 404) {
+      return false;
+    }
+    throw error;
+  }
+}
+
 export async function isRepoEmpty(token: string, owner: string, repo: string): Promise<boolean> {
   try {
     await githubRequest(token, 'GET', `/repos/${owner}/${repo}/git/ref/heads/main`);
