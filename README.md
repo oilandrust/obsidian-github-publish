@@ -1,6 +1,6 @@
 ## Publish your notes for free in a few clicks
-The Plugin **Github Publish** allows you to publish your vault in minutes without the configuration hassle of the usual free solutions.
-The plugin uses [Quartz](https://quartz.jzhao.xyz/) as a rendering engine and GitHub Pages for hosting, but does all the configuration setup for you.
+The Plugin allows you to publish your vault in minutes without the configuration and learning curve of the free solutions.
+The plugin uses [Quartz](https://quartz.jzhao.xyz/) as a site generator and GitHub Pages for hosting, but does all the configuration setup for you.
 
 ### Easy steps:
 - Authenticate with your GitHub account,
@@ -10,6 +10,11 @@ The plugin uses [Quartz](https://quartz.jzhao.xyz/) as a rendering engine and Gi
 
 ![Setup Demo](screenshots/setup_demo.gif)
 
+## GitHub Permissions
+The plugin requires a few permissions from your GitHub account; those are the permissions and why we ask for them.
+- **Public Repo**: We use this permission to create new repositories on your behalf, list existing public repositories, and create commits to upload content.
+- **Workflow**: We use this to set up GitHub Actions that build the website when you publish new content.
+We do not read any data from your repositories other than that, and the plugin does not delete repositories or touch data outside the content/ folder.
 ## Live Demo
 
 Checkout the Wiki of the project that is published with the Quartz template.
@@ -41,7 +46,7 @@ The plugin keeps track of your published sites, lets you know when there are cha
 
 ## Enjoying the pluggin or missing some features?
 
-Get in touch! The pluggin is in a early prototype version and I am curious to know what features you would like to see, get in touch directly via email: orouiller@gmail.com.
+Get in touch! The plugin is in an early prototype version, and I am curious to know what features you would like to see. Get in touch directly via email: orouiller@gmail.com.
 
 ## Some Issue?
 

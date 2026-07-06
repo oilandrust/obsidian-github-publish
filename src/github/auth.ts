@@ -4,7 +4,7 @@ const DEVICE_CODE_URL = 'https://github.com/login/device/code';
 const ACCESS_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 
 /** Classic OAuth scopes for device flow (space-separated). */
-export const OAUTH_SCOPES = 'repo workflow';
+export const OAUTH_SCOPES = 'public_repo workflow';
 
 export interface DeviceCodeResponse {
   device_code: string;
