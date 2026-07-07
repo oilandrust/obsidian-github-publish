@@ -4,7 +4,7 @@ The plugin uses [Quartz](https://quartz.jzhao.xyz/) as a site generator and GitH
 
 ### Easy steps:
 - Authenticate with your GitHub account,
-- Give permissions (repo and actions)
+- Give permissions (public repo and actions)
 - Select the folder you want to publish, and the name of the site
 - Profit!
 
@@ -43,6 +43,13 @@ The plugin keeps track of your published sites, lets you know when there are cha
 2. On first publish, the plugin creates a repo containing your notes under `content/`, a pinned [Quartz](https://quartz.jzhao.xyz/) toolchain, and a deploy workflow.
 3. A commit to `main` triggers GitHub Actions, which builds `dist/` and deploys to GitHub Pages.
 4. Later publishes diff your vault folder against a stored manifest and push only what changed.
+
+## Configuration
+
+The pluggin settings lets you edit Quartz configuration file in the settings. The configuration is published with the content when it changed and is applied on a new publish build.
+
+This allows to chose and configure Quartz pluggins, themes, colors, analytics, etc.
+More info about Quartz configuration can be found [here](https://quartz.jzhao.xyz/configuration).
 
 ## Enjoying the pluggin or missing some features?
 

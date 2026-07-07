@@ -1,5 +1,5 @@
 import { resolveQuartzCommitSha } from '../quartz/versions';
-import { RepoFile, SetupConfig } from '../settings';
+import { PublishedSite, RepoFile, SetupConfig } from '../settings';
 import { extname } from '../utils/path';
 import {
   assertQuartzToolchainAvailable,
@@ -8,12 +8,18 @@ import {
   readToolchainText,
 } from '../toolchain/embeddedToolchain';
 
+/** Toolchain file users may override per site (Phase 1 customization). */
+export const QUARTZ_CONFIG_FILE = 'quartz.config.yaml';
+
 export interface PublishBundleContext {
   siteName: string;
   repoName: string;
   owner: string;
   quartzCommitSha?: string | null;
 }
+
+/** Per-site overrides for toolchain files, keyed by their repo-relative path. */
+export type ToolchainOverrides = Partial<Record<string, string>>;
 
 const TEXT_EXTENSIONS = new Set([
   '.md',
@@ -74,11 +80,25 @@ function pushTemplatedFile(
   });
 }
 
-function loadQuartzToolchain(context: PublishBundleContext): RepoFile[] {
+function loadQuartzToolchain(
+  context: PublishBundleContext,
+  overrides?: ToolchainOverrides,
+): RepoFile[] {
   const filePaths = loadToolchainManifest();
   const files: RepoFile[] = [];
 
   for (const relativePath of filePaths) {
+    const override = overrides?.[relativePath];
+    if (override !== undefined) {
+      // User override is already resolved (no templating placeholders).
+      files.push({
+        path: relativePath,
+        content: new TextEncoder().encode(override),
+        encoding: 'utf-8',
+      });
+      continue;
+    }
+
     if (relativePath.endsWith('.template')) {
       const raw = readToolchainText(relativePath);
       pushTemplatedFile(files, relativePath, raw, context);
@@ -105,8 +125,16 @@ export function assertPublishToolchainReady(): void {
   assertQuartzToolchainAvailable();
 }
 
-export function loadPublishToolchainFiles(context: PublishBundleContext): RepoFile[] {
-  return loadQuartzToolchain(context);
+export function loadPublishToolchainFiles(
+  context: PublishBundleContext,
+  overrides?: ToolchainOverrides,
+): RepoFile[] {
+  return loadQuartzToolchain(context, overrides);
+}
+
+/** Embedded quartz.config.yaml with placeholders resolved for a specific site. */
+export function resolveDefaultQuartzConfig(context: PublishBundleContext): string {
+  return applyTemplate(readToolchainText(QUARTZ_CONFIG_FILE), context);
 }
 
 export function publishBundleContextFromConfig(
@@ -118,5 +146,14 @@ export function publishBundleContextFromConfig(
     repoName: config.repoName,
     owner,
     quartzCommitSha: config.quartzCommitSha,
+  };
+}
+
+export function publishBundleContextFromSite(site: PublishedSite): PublishBundleContext {
+  return {
+    siteName: site.siteName,
+    repoName: site.repo,
+    owner: site.owner,
+    quartzCommitSha: site.quartzCommitSha,
   };
 }

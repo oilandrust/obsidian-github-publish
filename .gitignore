@@ -2,3 +2,4 @@ node_modules/
 dist/
 main.js
 data.json
+sites/

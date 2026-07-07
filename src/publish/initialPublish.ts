@@ -3,8 +3,13 @@ import { enableGitHubPages } from '../github/pages';
 import { createInitialCommit, ensureRepositoryReadyForGit } from '../github/git';
 import { resolveRepository } from '../github/repos';
 import { ProgressState, RepoFile, SetupConfig } from '../settings';
-import { loadPublishToolchainFiles, publishBundleContextFromConfig, assertPublishToolchainReady } from './bundleToolchain';
-import { buildContentManifest } from './diffVault';
+import {
+  loadPublishToolchainFiles,
+  publishBundleContextFromConfig,
+  assertPublishToolchainReady,
+  QUARTZ_CONFIG_FILE,
+} from './bundleToolchain';
+import { buildContentManifest, hashFileContent } from './diffVault';
 import { ensureQuartzHomePage } from './ensureQuartzHomePage';
 import { scanVaultFolder } from './scanVault';
 import { log } from '../log';
@@ -15,6 +20,8 @@ export interface PublishResult {
   commitSha: string;
   manifest: Record<string, string>;
   liveUrl: string;
+  /** Hash of the quartz.config.yaml published in this run. */
+  configHash?: string;
 }
 
 export async function runInitialPublish(
@@ -95,6 +102,8 @@ export async function runInitialPublish(
   );
 
   const manifest = buildContentManifest(allFiles);
+  const configFile = toolchainFiles.find((file) => file.path === QUARTZ_CONFIG_FILE);
+  const configHash = configFile ? hashFileContent(configFile.content) : undefined;
 
   if (warnings.length > 0) {
     console.warn('GitHub Publish warnings:', warnings);
@@ -106,6 +115,7 @@ export async function runInitialPublish(
     commitSha,
     manifest,
     liveUrl: `https://${owner}.github.io/${repoName}/`,
+    configHash,
   };
 }
 

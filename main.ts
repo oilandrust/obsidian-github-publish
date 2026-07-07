@@ -153,7 +153,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
 
     if (!connected) {
       childEl(containerEl, 'p', {
-        text: 'Connect your GitHub account to start publishing your vault or a specific folder. Authorization uses repo and workflow scopes.',
+        text: 'Connect your GitHub account to start publishing your vault or a specific folder. Authorization uses public repo and workflow scopes.',
       });
     }
 
@@ -251,6 +251,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
           (selected) => {
             void this.plugin.untrackPublishedSite(selected);
           },
+          () => this.display(),
         ).render(sitesContainer);
       }
     } else {

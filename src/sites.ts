@@ -35,6 +35,7 @@ export function publishedSiteFromPublishResult(
   repo: string,
   commitSha: string,
   manifest: Record<string, string>,
+  configHash?: string,
 ): PublishedSite {
   return {
     id: siteId(owner, repo),
@@ -46,6 +47,7 @@ export function publishedSiteFromPublishResult(
     manifest,
     templateEngine: 'quartz',
     quartzCommitSha: config.quartzCommitSha ?? null,
+    configHash,
   };
 }
 

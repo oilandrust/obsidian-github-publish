@@ -1,13 +1,16 @@
 import { App } from 'obsidian';
 import { createContentUpdateCommit } from '../github/git';
-import { PublishedSite, ProgressState } from '../settings';
+import { PublishedSite, ProgressState, RepoFile } from '../settings';
 import {
   countDiffChanges,
   diffAgainstManifest,
   formatDiffSummary,
   mergeManifestAfterPublish,
+  PublishDiff,
 } from './diffVault';
 import { PublishResult } from './initialPublish';
+import { QUARTZ_CONFIG_FILE } from './bundleToolchain';
+import { getSiteConfigChange } from './siteConfig';
 import { scanVaultFolder } from './scanVault';
 import { log } from '../log';
 
@@ -28,41 +31,47 @@ export async function runPublishChanges(
   onProgress({ phase: 'preparing', message: 'Scanning vault for changes…' });
   const { files: contentFiles, warnings } = await scanVaultFolder(app.vault, contentFolder);
   const diff = diffAgainstManifest(site.manifest, contentFiles);
+  const configChange = await getSiteConfigChange(app, site);
 
-  if (countDiffChanges(diff) === 0) {
+  if (countDiffChanges(diff) === 0 && !configChange) {
     throw new Error('No unpublished changes found.');
   }
 
   const changedFiles = [...diff.adds, ...diff.updates];
-  const summary = formatDiffSummary(diff);
+  const uploadFiles: RepoFile[] = [...changedFiles];
+  if (configChange) {
+    uploadFiles.push({
+      path: QUARTZ_CONFIG_FILE,
+      content: new TextEncoder().encode(configChange.content),
+      encoding: 'utf-8',
+    });
+  }
+
+  const summary = combineChangeSummary(diff, Boolean(configChange));
   log(`Publishing changes: ${summary}`);
 
   onProgress({
     phase: 'uploading',
-    message: `Uploading ${changedFiles.length} changed file(s)…`,
+    message: `Uploading ${uploadFiles.length} changed file(s)…`,
     uploadCurrent: 0,
-    uploadTotal: changedFiles.length + 1,
+    uploadTotal: uploadFiles.length + 1,
   });
 
-  const changeCount = countDiffChanges(diff);
-  const commitMessage =
-    changeCount === 1
-      ? 'Publish vault updates'
-      : `Publish vault updates (${changeCount} files)`;
+  const commitMessage = buildCommitMessage(diff, Boolean(configChange));
 
   const commitSha = await createContentUpdateCommit(
     token,
     owner,
     repo,
-    changedFiles,
+    uploadFiles,
     diff.deletes,
     commitMessage,
     (current, total) => {
       onProgress({
         phase: 'uploading',
         message:
-          current <= changedFiles.length
-            ? `Uploading changed files (${current}/${changedFiles.length})…`
+          current <= uploadFiles.length
+            ? `Uploading changed files (${current}/${uploadFiles.length})…`
             : 'Creating Git commit…',
         uploadCurrent: current,
         uploadTotal: total,
@@ -82,16 +91,45 @@ export async function runPublishChanges(
     commitSha,
     manifest,
     liveUrl: `https://${owner}.github.io/${repo}/`,
+    configHash: configChange ? configChange.hash : site.configHash,
   };
+}
+
+function combineChangeSummary(diff: PublishDiff, configChanged: boolean): string {
+  const contentChanges = countDiffChanges(diff);
+  if (!configChanged) {
+    return formatDiffSummary(diff);
+  }
+  if (contentChanges === 0) {
+    return 'Quartz config changed';
+  }
+  return `${formatDiffSummary(diff)}, config changed`;
+}
+
+function buildCommitMessage(diff: PublishDiff, configChanged: boolean): string {
+  const changeCount = countDiffChanges(diff);
+  if (changeCount === 0 && configChanged) {
+    return 'Update Quartz configuration';
+  }
+  const base =
+    changeCount === 1 ? 'Publish vault updates' : `Publish vault updates (${changeCount} files)`;
+  return configChanged ? `${base} + Quartz config` : base;
+}
+
+export interface UnpublishedChanges {
+  diff: PublishDiff;
+  summary: string;
+  configChanged: boolean;
 }
 
 export async function detectUnpublishedChanges(
   app: App,
   site: PublishedSite,
-): Promise<{ diff: ReturnType<typeof diffAgainstManifest>; summary: string } | null> {
+): Promise<UnpublishedChanges | null> {
   if (!site.contentFolder) return null;
 
   const { files } = await scanVaultFolder(app.vault, site.contentFolder);
   const diff = diffAgainstManifest(site.manifest, files);
-  return { diff, summary: formatDiffSummary(diff) };
+  const configChanged = (await getSiteConfigChange(app, site)) !== null;
+  return { diff, summary: combineChangeSummary(diff, configChanged), configChanged };
 }

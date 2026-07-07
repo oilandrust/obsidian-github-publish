@@ -68,6 +68,7 @@ export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): v
         result.repo,
         result.commitSha,
         result.manifest,
+        result.configHash,
       );
       plugin.settings.publishedSites = upsertPublishedSite(plugin.settings.publishedSites, site);
       plugin.settings.savedSetup = null;
@@ -116,6 +117,7 @@ export function startPublishChanges(plugin: GitHubPublishHost, site: PublishedSi
         {
           lastPublishedCommitSha: result.commitSha,
           manifest: result.manifest,
+          configHash: result.configHash,
         },
       );
       await plugin.saveSettings();

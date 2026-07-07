@@ -12,6 +12,7 @@ import { showAdvancedSettings } from '../buildFlags';
 import { GitHubPublishHost } from '../pluginHost';
 import { childDiv, childEl, childSpan, addTrashButton } from './dom';
 import { UntrackSiteModal } from './UntrackSiteModal';
+import { QuartzConfigModal } from './QuartzConfigModal';
 
 export class PublishedSiteCard {
   constructor(
@@ -21,6 +22,7 @@ export class PublishedSiteCard {
     private readonly isStale: () => boolean,
     private readonly onPublishChanges: (site: PublishedSite) => void,
     private readonly onUntrack: (site: PublishedSite) => void,
+    private readonly onChanged?: () => void,
   ) {}
 
   render(container: HTMLElement): void {
@@ -115,6 +117,17 @@ export class PublishedSiteCard {
       liveStatus.setText('Connect GitHub to check status');
     }
 
+    const actions = childDiv(card, { cls: 'github-publish-site-actions' });
+    const configBtn = childEl(actions, 'button', {
+      cls: 'github-publish-config-button',
+      text: 'Edit Quartz config',
+    });
+    configBtn.addEventListener('click', () => {
+      new QuartzConfigModal(this.app, this.plugin, this.site, () => {
+        this.onChanged?.();
+      }).open();
+    });
+
     if (isPublishing) {
       return;
     }
@@ -129,7 +142,7 @@ export class PublishedSiteCard {
         return;
       }
 
-      const hasChanges = countDiffChanges(result.diff) > 0;
+      const hasChanges = countDiffChanges(result.diff) > 0 || result.configChanged;
       changesStatus.removeClass(
         'github-publish-status-checking',
         'github-publish-status-live',

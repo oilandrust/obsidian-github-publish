@@ -9,6 +9,8 @@ export interface PublishedSite {
   /** Legacy field; new sites always use Quartz. */
   templateEngine?: 'quartz' | 'inhouse';
   quartzCommitSha: string | null;
+  /** Hash of the quartz.config.yaml last published for this site. */
+  configHash?: string;
 }
 
 export interface PluginSettings {
