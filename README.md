@@ -102,7 +102,7 @@ Published sites optionally report **anonymous usage counters** when their GitHub
 - `publish` — first publish commit
 - `update` — later content publishes
 
-Setup and viewing stats: [telemetry/README.md](telemetry/README.md).
+Counters are stored in a separate Cloudflare Worker (maintained locally, not in this repository).
 
 ## License
 
