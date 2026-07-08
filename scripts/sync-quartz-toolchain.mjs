@@ -40,6 +40,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Record site telemetry
+        continue-on-error: true
+        run: |
+          if [[ "\${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            EVENT="update"
+          elif [[ "\${{ github.event.head_commit.message }}" == "Initial publish from Obsidian" ]]; then
+            EVENT="publish"
+          else
+            EVENT="update"
+          fi
+          curl -sS -f -X POST "{{telemetryUrl}}/v1/event" \\
+            -H "Authorization: Bearer {{telemetryToken}}" \\
+            -H "Content-Type: application/json" \\
+            -d "{\\"event\\":\\"$EVENT\\"}"
+
       - uses: actions/setup-node@v5
         with:
           node-version: '22'

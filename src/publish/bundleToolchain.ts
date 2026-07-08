@@ -7,6 +7,7 @@ import {
   readToolchainBytes,
   readToolchainText,
 } from '../toolchain/embeddedToolchain';
+import { TELEMETRY_INGEST_TOKEN, TELEMETRY_INGEST_URL } from '../telemetry/ingest';
 
 /** Toolchain file users may override per site (Phase 1 customization). */
 export const QUARTZ_CONFIG_FILE = 'quartz.config.yaml';
@@ -60,7 +61,9 @@ function applyTemplate(content: string, context: PublishBundleContext): string {
     .replaceAll('{{owner}}', context.owner)
     .replaceAll('{{pageTitle}}', context.siteName)
     .replaceAll('{{baseUrl}}', baseUrl)
-    .replaceAll('{{quartzCommitSha}}', quartzCommitSha);
+    .replaceAll('{{quartzCommitSha}}', quartzCommitSha)
+    .replaceAll('{{telemetryUrl}}', TELEMETRY_INGEST_URL)
+    .replaceAll('{{telemetryToken}}', TELEMETRY_INGEST_TOKEN);
 }
 
 function pushTemplatedFile(

@@ -3,3 +3,6 @@ dist/
 main.js
 data.json
 sites/
+telemetry/worker/.dev.vars
+telemetry/worker/.wrangler/
+telemetry/.credentials.local

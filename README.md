@@ -89,35 +89,20 @@ The folder should contain `manifest.json`, `main.js`, and `styles.css`.
 Published sites appear as cards in the plugin settings, each with its own **Publish changes** button and live status.
 
 
-
 If publish fails with an `UpdateRef` permissions error, disconnect and reconnect GitHub so your token includes the `workflow` scope.
 
 ## Deleting a published Site
 
 The Pluggin currently do not implement deletion of site and repository. Please delete the repository on your GitHub account, you can find a link to it in the site status of the puggin settings.
 
-## Development
+## Telemetry
 
-Requirements: Node.js 20+ and npm.
+Published sites optionally report **anonymous usage counters** when their GitHub Pages deploy workflow runs (no user, vault, repository, or IP data):
 
-```bash
-git clone https://github.com/oilandrust/obsidian-github-publish.git
-cd obsidian-github-publish
-npm run build:plugin
-```
+- `publish` — first publish commit
+- `update` — later content publishes
 
-| Script | Purpose |
-|--------|---------|
-| `npm run build:plugin` | Sync Quartz toolchain and build the plugin |
-| `npm run build:plugin:advanced` | Build with Quartz version controls in settings |
-| `npm run sync:toolchain` | Refresh bundled Quartz toolchain |
-| `npm run build` | Plugin only (assumes toolchain already synced) |
-| `npm run lint` | Run ESLint |
-| `npm run dev` | Watch mode for plugin development |
-
-### Debugging
-
-Open Obsidian's developer console (`Cmd+Option+I` on macOS, `Ctrl+Shift+I` on Windows/Linux) and filter by `GitHub Publish` for API logs and errors.
+Setup and viewing stats: [telemetry/README.md](telemetry/README.md).
 
 ## License
 
