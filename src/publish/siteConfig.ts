@@ -1,6 +1,5 @@
 import type { App } from 'obsidian';
 import { FileSystemAdapter, Platform } from 'obsidian';
-import * as path from 'path';
 import { shell } from 'electron';
 import { PublishedSite } from '../settings';
 import { hashFileContent } from './diffVault';
@@ -54,6 +53,14 @@ export async function ensureSiteConfigOnDisk(
   return absolute;
 }
 
+function parentDirectory(filePath: string): string {
+  const lastSep = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+  if (lastSep <= 0) {
+    return filePath;
+  }
+  return filePath.slice(0, lastSep);
+}
+
 export function revealPathInFileManager(absolutePath: string): void {
   if (!Platform.isDesktopApp) {
     throw new Error('Reveal in file manager is only available in the desktop app.');
@@ -69,7 +76,7 @@ export function openParentFolderInFileManager(absolutePath: string): void {
   if (!Platform.isDesktopApp) {
     throw new Error('Open in file manager is only available in the desktop app.');
   }
-  const parentDir = path.dirname(absolutePath);
+  const parentDir = parentDirectory(absolutePath);
   void shell.openPath(parentDir);
 }
 
