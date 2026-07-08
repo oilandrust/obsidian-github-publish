@@ -16,5 +16,5 @@
     "lib": ["DOM", "ES2021"]
   },
   "include": ["**/*.ts"],
-  "exclude": ["assets/toolchain-quartz/**", "node_modules"]
+  "exclude": ["assets/toolchain-quartz/**", "node_modules", "telemetry/worker/**"]
 }

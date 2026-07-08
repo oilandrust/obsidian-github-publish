@@ -4,12 +4,25 @@ interface Env {
   TELEMETRY_ADMIN_TOKEN: string;
 }
 
+type TelemetryEvent = 'publish' | 'update';
+
 interface EventBody {
   event?: unknown;
   version?: unknown;
 }
 
-const ALLOWED_EVENTS = new Set(['publish', 'update']);
+interface StatsPayload {
+  generatedAt: string;
+  totals: Record<TelemetryEvent, number>;
+  byDay: Record<string, Partial<Record<TelemetryEvent, number>>>;
+  byVersion: Record<string, Partial<Record<TelemetryEvent, number>>>;
+}
+
+const ALLOWED_EVENTS: ReadonlySet<TelemetryEvent> = new Set(['publish', 'update']);
+
+function isTelemetryEvent(value: string): value is TelemetryEvent {
+  return value === 'publish' || value === 'update';
+}
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data, null, 2), {
@@ -70,8 +83,12 @@ async function incrementCounter(kv: KVNamespace, key: string): Promise<void> {
   await kv.put(key, String(current + 1));
 }
 
-function parseEventBody(body: EventBody): { event: string; version?: string } | null {
-  if (typeof body.event !== 'string' || !ALLOWED_EVENTS.has(body.event)) {
+function isEventBody(value: unknown): value is EventBody {
+  return typeof value === 'object' && value !== null;
+}
+
+function parseEventBody(body: EventBody): { event: TelemetryEvent; version?: string } | null {
+  if (typeof body.event !== 'string' || !isTelemetryEvent(body.event)) {
     return null;
   }
   if (body.version !== undefined && typeof body.version !== 'string') {
@@ -86,7 +103,7 @@ function parseEventBody(body: EventBody): { event: string; version?: string } | 
 
 async function recordEvent(
   kv: KVNamespace,
-  event: string,
+  event: TelemetryEvent,
   version?: string,
 ): Promise<void> {
   const day = todayUtc();
@@ -97,17 +114,17 @@ async function recordEvent(
   }
 }
 
-async function collectStats(kv: KVNamespace): Promise<Record<string, unknown>> {
-  const totals: Record<string, number> = {};
-  const byDay: Record<string, Record<string, number>> = {};
-  const byVersion: Record<string, Record<string, number>> = {};
+async function collectStats(kv: KVNamespace): Promise<StatsPayload> {
+  const totals: Record<TelemetryEvent, number> = { publish: 0, update: 0 };
+  const byDay: StatsPayload['byDay'] = {};
+  const byVersion: StatsPayload['byVersion'] = {};
 
   for (const event of ALLOWED_EVENTS) {
     totals[event] = await readCounter(kv, `total:${event}`);
   }
 
   for (const day of lastNDays(30)) {
-    const dayCounts: Record<string, number> = {};
+    const dayCounts: Partial<Record<TelemetryEvent, number>> = {};
     for (const event of ALLOWED_EVENTS) {
       const count = await readCounter(kv, `day:${day}:${event}`);
       if (count > 0) {
@@ -127,10 +144,12 @@ async function collectStats(kv: KVNamespace): Promise<Record<string, unknown>> {
       if (!match) {
         continue;
       }
-      const [, version, event] = match;
-      if (!ALLOWED_EVENTS.has(event)) {
+      const version = match[1];
+      const eventName = match[2];
+      if (!version || !eventName || !isTelemetryEvent(eventName)) {
         continue;
       }
+      const event: TelemetryEvent = eventName;
       if (!byVersion[version]) {
         byVersion[version] = {};
       }
@@ -223,14 +242,18 @@ export default {
         return json({ error: 'unauthorized' }, 401);
       }
 
-      let body: EventBody;
+      let rawBody: unknown;
       try {
-        body = (await request.json()) as EventBody;
+        rawBody = await request.json();
       } catch {
         return json({ error: 'invalid_json' }, 400);
       }
 
-      const parsed = parseEventBody(body);
+      if (!isEventBody(rawBody)) {
+        return json({ error: 'invalid_json' }, 400);
+      }
+
+      const parsed = parseEventBody(rawBody);
       if (!parsed) {
         return json({ error: 'invalid_event' }, 400);
       }
