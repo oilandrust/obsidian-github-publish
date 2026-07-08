@@ -11,7 +11,7 @@ import {
   readSiteConfigOverride,
   removeSiteConfigOverride,
   revealInFileManagerLabel,
-  revealPathInFileManager,
+  openParentFolderInFileManager,
   writeSiteConfigOverride,
 } from '../publish/siteConfig';
 
@@ -102,7 +102,7 @@ export class QuartzConfigModal extends Modal {
         this.site.id,
         content,
       );
-      revealPathInFileManager(absolutePath);
+      openParentFolderInFileManager(absolutePath);
       this.onChanged?.();
       new Notice(`${revealInFileManagerLabel()}: quartz.config.yaml`);
     } catch (error: unknown) {

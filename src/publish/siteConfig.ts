@@ -1,6 +1,6 @@
-import { realpathSync } from 'fs';
 import type { App } from 'obsidian';
 import { FileSystemAdapter, Platform } from 'obsidian';
+import * as path from 'path';
 import { PublishedSite } from '../settings';
 import { hashFileContent } from './diffVault';
 import {
@@ -57,16 +57,25 @@ export function revealPathInFileManager(absolutePath: string): void {
   if (!Platform.isDesktopApp) {
     throw new Error('Reveal in file manager is only available in the desktop app.');
   }
-  let resolvedPath = absolutePath;
-  try {
-    resolvedPath = realpathSync(absolutePath);
-  } catch {
-    // Fall back to the vault-resolved path if realpath fails.
-  }
   const electron = require('electron') as {
     shell: { showItemInFolder: (fullPath: string) => void };
   };
-  electron.shell.showItemInFolder(resolvedPath);
+  electron.shell.showItemInFolder(absolutePath);
+}
+
+/**
+ * Workaround for Electron/macOS Finder sluggishness when calling `showItemInFolder`
+ * from a renderer context: open the parent folder instead of selecting the file.
+ */
+export function openParentFolderInFileManager(absolutePath: string): void {
+  if (!Platform.isDesktopApp) {
+    throw new Error('Open in file manager is only available in the desktop app.');
+  }
+  const parentDir = path.dirname(absolutePath);
+  const electron = require('electron') as {
+    shell: { openPath: (fullPath: string) => Promise<string> };
+  };
+  void electron.shell.openPath(parentDir);
 }
 
 export function revealInFileManagerLabel(): string {
