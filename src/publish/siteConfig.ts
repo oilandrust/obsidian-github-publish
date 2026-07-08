@@ -1,4 +1,6 @@
+import { realpathSync } from 'fs';
 import type { App } from 'obsidian';
+import { FileSystemAdapter, Platform } from 'obsidian';
 import { PublishedSite } from '../settings';
 import { hashFileContent } from './diffVault';
 import {
@@ -27,6 +29,54 @@ function siteDir(app: App, siteId: string): string {
 
 export function siteConfigPath(app: App, siteId: string): string {
   return `${siteDir(app, siteId)}/${CONFIG_FILENAME}`;
+}
+
+export function absoluteSiteConfigPath(app: App, siteId: string): string | null {
+  const adapter = app.vault.adapter;
+  if (!(adapter instanceof FileSystemAdapter)) {
+    return null;
+  }
+  return adapter.getFullPath(siteConfigPath(app, siteId));
+}
+
+/** Write config to disk so an external editor or Finder reveal can use it. */
+export async function ensureSiteConfigOnDisk(
+  app: App,
+  siteId: string,
+  content: string,
+): Promise<string> {
+  await writeSiteConfigOverride(app, siteId, content);
+  const absolute = absoluteSiteConfigPath(app, siteId);
+  if (!absolute) {
+    throw new Error('Reveal in Finder requires a local vault on disk.');
+  }
+  return absolute;
+}
+
+export function revealPathInFileManager(absolutePath: string): void {
+  if (!Platform.isDesktopApp) {
+    throw new Error('Reveal in file manager is only available in the desktop app.');
+  }
+  let resolvedPath = absolutePath;
+  try {
+    resolvedPath = realpathSync(absolutePath);
+  } catch {
+    // Fall back to the vault-resolved path if realpath fails.
+  }
+  const electron = require('electron') as {
+    shell: { showItemInFolder: (fullPath: string) => void };
+  };
+  electron.shell.showItemInFolder(resolvedPath);
+}
+
+export function revealInFileManagerLabel(): string {
+  if (Platform.isMacOS) {
+    return 'Show in Finder';
+  }
+  if (Platform.isWin) {
+    return 'Show in Explorer';
+  }
+  return 'Show in file manager';
 }
 
 async function ensureDir(app: App, dir: string): Promise<void> {

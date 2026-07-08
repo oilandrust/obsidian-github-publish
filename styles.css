@@ -113,6 +113,14 @@
   margin-top: 0.5rem;
 }
 
+.github-publish-config-docs {
+  margin: 0.5rem 0 0.75rem;
+}
+
+.github-publish-config-docs-link {
+  font-size: 0.9em;
+}
+
 .github-publish-config-editor {
   width: 100%;
   min-height: 320px;
@@ -123,6 +131,16 @@
   white-space: pre;
   tab-size: 2;
   resize: vertical;
+}
+
+.github-publish-config-nav {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.github-publish-config-nav-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .github-publish-folder-tree-host {

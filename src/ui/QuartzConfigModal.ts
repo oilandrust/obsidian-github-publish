@@ -7,10 +7,15 @@ import {
   resolveDefaultQuartzConfig,
 } from '../publish/bundleToolchain';
 import {
+  ensureSiteConfigOnDisk,
   readSiteConfigOverride,
   removeSiteConfigOverride,
+  revealInFileManagerLabel,
+  revealPathInFileManager,
   writeSiteConfigOverride,
 } from '../publish/siteConfig';
+
+const QUARTZ_CONFIGURATION_URL = 'https://quartz.jzhao.xyz/configuration';
 
 export class QuartzConfigModal extends Modal {
   private readonly defaultConfig: string;
@@ -35,6 +40,15 @@ export class QuartzConfigModal extends Modal {
       text: `Customize quartz.config.yaml for "${this.site.siteName}". Saved changes are uploaded the next time you publish changes for this site.`,
     });
 
+    const docsRow = childDiv(contentEl, { cls: 'github-publish-config-docs' });
+    const docsLink = childEl(docsRow, 'a', {
+      cls: 'github-publish-config-docs-link',
+      href: QUARTZ_CONFIGURATION_URL,
+      text: 'Learn how to configure Quartz here',
+    });
+    docsLink.target = '_blank';
+    docsLink.rel = 'noopener noreferrer';
+
     const editor = childEl(contentEl, 'textarea', {
       cls: 'github-publish-config-editor',
     });
@@ -55,20 +69,47 @@ export class QuartzConfigModal extends Modal {
         );
       });
 
-    const nav = childDiv(contentEl, { cls: 'github-publish-buttons' });
+    const nav = childDiv(contentEl, { cls: 'github-publish-buttons github-publish-config-nav' });
 
-    const cancelBtn = childEl(nav, 'button', { text: 'Cancel' });
+    const revealBtn = childEl(nav, 'button', {
+      text: revealInFileManagerLabel(),
+      cls: 'github-publish-config-reveal',
+    });
+    revealBtn.addEventListener('click', () => {
+      void this.revealInFileManager(editor.value);
+    });
+
+    const navActions = childDiv(nav, { cls: 'github-publish-config-nav-actions' });
+
+    const cancelBtn = childEl(navActions, 'button', { text: 'Cancel' });
     cancelBtn.addEventListener('click', () => this.close());
 
-    const resetBtn = childEl(nav, 'button', { text: 'Reset to default' });
+    const resetBtn = childEl(navActions, 'button', { text: 'Reset to default' });
     resetBtn.addEventListener('click', () => {
       editor.value = this.defaultConfig;
     });
 
-    const saveBtn = childEl(nav, 'button', { text: 'Save', cls: 'mod-cta' });
+    const saveBtn = childEl(navActions, 'button', { text: 'Save', cls: 'mod-cta' });
     saveBtn.addEventListener('click', () => {
       void this.save(editor.value);
     });
+  }
+
+  private async revealInFileManager(content: string): Promise<void> {
+    try {
+      const absolutePath = await ensureSiteConfigOnDisk(
+        this.plugin.app,
+        this.site.id,
+        content,
+      );
+      revealPathInFileManager(absolutePath);
+      this.onChanged?.();
+      new Notice(`${revealInFileManagerLabel()}: quartz.config.yaml`);
+    } catch (error: unknown) {
+      new Notice(
+        `Could not reveal config file: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   private async save(content: string): Promise<void> {

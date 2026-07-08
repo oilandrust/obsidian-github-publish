@@ -32,6 +32,11 @@ The **Edit Quartz config** button on each published-site card opens
 - **Save** writes the override. If the content is identical to the default, the
   override file is removed so the site falls back to the embedded config.
 - **Reset to default** repopulates the editor with the default (removed on save).
+- **Show in Finder** (macOS) / **Show in Explorer** (Windows) writes the current
+  editor content to disk and reveals `quartz.config.yaml` in the system file
+  manager so you can edit it in an external YAML editor (e.g. VS Code).
+- Link to [Quartz configuration](https://quartz.jzhao.xyz/configuration) docs in
+  the modal header.
 
 ### Publish integration
 
