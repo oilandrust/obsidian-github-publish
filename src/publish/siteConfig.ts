@@ -1,6 +1,7 @@
 import type { App } from 'obsidian';
 import { FileSystemAdapter, Platform } from 'obsidian';
 import * as path from 'path';
+import { shell } from 'electron';
 import { PublishedSite } from '../settings';
 import { hashFileContent } from './diffVault';
 import {
@@ -57,10 +58,7 @@ export function revealPathInFileManager(absolutePath: string): void {
   if (!Platform.isDesktopApp) {
     throw new Error('Reveal in file manager is only available in the desktop app.');
   }
-  const electron = require('electron') as {
-    shell: { showItemInFolder: (fullPath: string) => void };
-  };
-  electron.shell.showItemInFolder(absolutePath);
+  shell.showItemInFolder(absolutePath);
 }
 
 /**
@@ -72,10 +70,7 @@ export function openParentFolderInFileManager(absolutePath: string): void {
     throw new Error('Open in file manager is only available in the desktop app.');
   }
   const parentDir = path.dirname(absolutePath);
-  const electron = require('electron') as {
-    shell: { openPath: (fullPath: string) => Promise<string> };
-  };
-  void electron.shell.openPath(parentDir);
+  void shell.openPath(parentDir);
 }
 
 export function revealInFileManagerLabel(): string {

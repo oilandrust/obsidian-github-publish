@@ -1,7 +1,7 @@
 {
   "id": "github-publish",
   "name": "GitHub Publish",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "minAppVersion": "1.5.0",
   "description": "Publish your vault notes to GitHub Pages for free.",
   "author": "oilandrust",

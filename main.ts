@@ -91,7 +91,7 @@ export default class GitHubPublishPlugin extends Plugin {
   }
 
   refreshSettingsTab(): void {
-    this.settingTab?.display();
+    this.settingTab?.render();
   }
 
   openSetupWizard(): void {
@@ -142,7 +142,13 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     super(app, plugin);
   }
 
+  // Obsidian calls `display()` to render the settings tab UI.
+  // Keep it for compatibility, but avoid referencing it internally since it's deprecated in newer typings.
   display(): void {
+    this.render();
+  }
+
+  render(): void {
     const { containerEl } = this;
     this.statusCheckId++;
     const checkId = this.statusCheckId;
@@ -167,7 +173,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
             this.plugin.settings.accessToken = null;
             this.plugin.settings.githubUsername = null;
             await this.plugin.saveSettings();
-            this.display();
+            this.render();
           });
         } else {
           btn.setButtonText(this.connecting ? 'Connecting…' : 'Connect to GitHub').setCta();
@@ -175,24 +181,24 @@ class GitHubPublishSettingTab extends PluginSettingTab {
           btn.onClick(() => {
             this.connecting = true;
             this.deviceUserCode = null;
-            this.display();
+            this.render();
             void connectGitHub(this.plugin, {
               onUserCode: (code) => {
                 this.deviceUserCode = code;
-                this.display();
+                this.render();
               },
             })
               .then((user) => {
                 new Notice(`Connected as ${user.login}`);
                 this.connecting = false;
                 this.deviceUserCode = null;
-                this.display();
+                this.render();
               })
               .catch((error: unknown) => {
                 new Notice(error instanceof Error ? error.message : String(error));
                 this.connecting = false;
                 this.deviceUserCode = null;
-                this.display();
+                this.render();
               });
           });
         }
@@ -251,7 +257,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
           (selected) => {
             void this.plugin.untrackPublishedSite(selected);
           },
-          () => this.display(),
+          () => this.render(),
         ).render(sitesContainer);
       }
     } else {
@@ -285,7 +291,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
             this.plugin.settings.quartzCommitSha = sha;
           }
           await this.plugin.saveSettings();
-          this.display();
+          this.render();
         });
       });
 
