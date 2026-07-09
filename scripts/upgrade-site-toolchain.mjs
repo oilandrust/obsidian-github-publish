@@ -13,8 +13,6 @@ const ROOT = path.resolve(__dirname, '..');
 const TOOLCHAIN_DIR = path.join(ROOT, 'assets', 'toolchain-quartz');
 const DEFAULT_QUARTZ_COMMIT = '9cf87ff1c248a8ca551093214b0fec3b31415009';
 const TELEMETRY_INGEST_URL = 'https://github-publish-telemetry.o-rouiller.workers.dev';
-const TELEMETRY_INGEST_TOKEN =
-  'b8345e942987e66c4874d69911d202a7fa91512591c78880cef38b50740d33a2';
 
 const SITES = {
   'oilandrust/githubpublish-wiki': {
@@ -52,8 +50,7 @@ function applyTemplate(content, context) {
     .replaceAll('{{pageTitle}}', context.siteName)
     .replaceAll('{{baseUrl}}', baseUrl)
     .replaceAll('{{quartzCommitSha}}', context.quartzCommitSha)
-    .replaceAll('{{telemetryUrl}}', TELEMETRY_INGEST_URL)
-    .replaceAll('{{telemetryToken}}', TELEMETRY_INGEST_TOKEN);
+    .replaceAll('{{telemetryUrl}}', TELEMETRY_INGEST_URL);
 }
 
 function loadToolchainFiles(context) {

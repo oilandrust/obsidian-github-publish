@@ -51,7 +51,6 @@ jobs:
             EVENT="update"
           fi
           curl -sS -f -X POST "{{telemetryUrl}}/v1/event" \\
-            -H "Authorization: Bearer {{telemetryToken}}" \\
             -H "Content-Type: application/json" \\
             -d "{\\"event\\":\\"$EVENT\\"}"
 
