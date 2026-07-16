@@ -9,10 +9,10 @@ import {
 
 const EXCLUDED_DIR_NAMES = new Set(['.git', 'node_modules']);
 const EXCLUDED_FILES = new Set(['.DS_Store']);
-const SKIPPED_EXTENSIONS = new Set(['.canvas']);
 
 const INCLUDED_EXTENSIONS = new Set([
   '.md',
+  '.canvas',
   '.png',
   '.jpg',
   '.jpeg',
@@ -21,6 +21,8 @@ const INCLUDED_EXTENSIONS = new Set([
   '.pdf',
   '.mp3',
 ]);
+
+const TEXT_EXTENSIONS = new Set(['md', 'canvas']);
 
 export interface ScanResult {
   files: RepoFile[];
@@ -81,7 +83,7 @@ async function walkFolder(
     const repoPath = `content/${file.path.slice(rootPath.length).replace(/^\//, '')}`;
     const content = await readVaultBinary(vault, file);
     const ext: string = file.extension.toLowerCase();
-    const encoding: 'utf-8' | 'base64' = ext === 'md' ? 'utf-8' : 'base64';
+    const encoding: 'utf-8' | 'base64' = TEXT_EXTENSIONS.has(ext) ? 'utf-8' : 'base64';
 
     files.push({ path: repoPath, content, encoding });
   }
@@ -91,8 +93,6 @@ function shouldSkip(relativePath: string): true | string | false {
   const basename = relativePath.split('/').pop() ?? relativePath;
   if (EXCLUDED_FILES.has(basename)) return true;
 
-  const ext = '.' + (basename.split('.').pop()?.toLowerCase() ?? '');
-  if (SKIPPED_EXTENSIONS.has(ext)) return true;
   if (relativePath.toLowerCase().endsWith('.excalidraw.md')) {
     return `Skipping Excalidraw note: ${relativePath}`;
   }

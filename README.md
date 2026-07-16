@@ -97,12 +97,7 @@ The Pluggin currently do not implement deletion of site and repository. Please d
 
 ## Telemetry
 
-Published sites optionally report **anonymous usage counters** when their GitHub Pages deploy workflow runs (no user, vault, repository, or IP data):
-
-- `publish` — first publish commit
-- `update` — later content publishes
-
-Counters are stored in a separate Cloudflare Worker (maintained locally, not in this repository).
+Published sites optionally report **anonymous usage counters** when their GitHub Pages deploy workflow runs (no user, vault, repository, or IP data).
 
 ## License
 
