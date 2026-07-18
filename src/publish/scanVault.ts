@@ -24,6 +24,46 @@ const INCLUDED_EXTENSIONS = new Set([
 
 const TEXT_EXTENSIONS = new Set(['md', 'canvas']);
 
+interface CanvasNode {
+  id: string;
+  type: string;
+  file?: string;
+  subpath?: string;
+  [key: string]: any;
+}
+
+interface CanvasData {
+  nodes?: CanvasNode[];
+  edges?: any[];
+  [key: string]: any;
+}
+
+function transformCanvasForPublish(content: Uint8Array): Uint8Array {
+  try {
+    const text = new TextDecoder('utf-8').decode(content);
+    const canvas: CanvasData = JSON.parse(text);
+
+    if (canvas.nodes) {
+      canvas.nodes = canvas.nodes.map((node) => {
+        if (node.type === 'file' && node.file) {
+          const filePath = node.file;
+          const hasSubpath = node.subpath !== undefined;
+          
+          if (!filePath.match(/\.(md|png|jpg|jpeg|gif|webp|pdf|mp3|canvas)$/i)) {
+            node.file = filePath + '.md';
+          }
+        }
+        return node;
+      });
+    }
+
+    const transformed = JSON.stringify(canvas, null, 2);
+    return new TextEncoder().encode(transformed);
+  } catch (error) {
+    return content;
+  }
+}
+
 export interface ScanResult {
   files: RepoFile[];
   warnings: string[];
@@ -81,9 +121,13 @@ async function walkFolder(
     }
 
     const repoPath = `content/${file.path.slice(rootPath.length).replace(/^\//, '')}`;
-    const content = await readVaultBinary(vault, file);
+    let content = await readVaultBinary(vault, file);
     const ext: string = file.extension.toLowerCase();
     const encoding: 'utf-8' | 'base64' = TEXT_EXTENSIONS.has(ext) ? 'utf-8' : 'base64';
+
+    if (ext === 'canvas') {
+      content = transformCanvasForPublish(content);
+    }
 
     files.push({ path: repoPath, content, encoding });
   }
