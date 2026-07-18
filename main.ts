@@ -21,7 +21,7 @@ import {
   resolveQuartzCommitSha,
   TESTED_QUARTZ_VERSIONS,
 } from './src/quartz/versions';
-import { showAdvancedSettings } from './src/buildFlags';
+import { buildCommit, isDevBuild, showAdvancedSettings } from './src/buildFlags';
 import { childDiv, childEl, addCopyButton } from './src/ui/dom';
 import { loadPluginSettingsData } from './src/utils/pluginData';
 
@@ -226,7 +226,9 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       this.renderAdvancedSettings(containerEl);
     }
 
-    //this.renderDevelopmentSettings(containerEl);
+    if (isDevBuild || showAdvancedSettings) {
+      this.renderDevelopmentSettings(containerEl);
+    }
 
     new Setting(containerEl)
       .setName('Publish new site')
@@ -265,6 +267,16 @@ class GitHubPublishSettingTab extends PluginSettingTab {
       if (saved) {
         this.renderSavedSetup(containerEl, saved);
       }
+    }
+
+    if (isDevBuild) {
+      new Setting(containerEl)
+        .setName('Build')
+        .setDesc(
+          [`v${this.plugin.manifest.version}`, buildCommit, 'dev']
+            .concat(showAdvancedSettings ? ['advanced'] : [])
+            .join(' · '),
+        );
     }
   }
 
