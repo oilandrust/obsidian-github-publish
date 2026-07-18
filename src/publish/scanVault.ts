@@ -38,20 +38,27 @@ interface CanvasData {
   [key: string]: any;
 }
 
-function transformCanvasForPublish(content: Uint8Array): Uint8Array {
+function transformCanvasForPublish(content: Uint8Array, rootPath: string): Uint8Array {
   try {
     const text = new TextDecoder('utf-8').decode(content);
     const canvas: CanvasData = JSON.parse(text);
 
+    const folderName = rootPath.split('/').filter(Boolean).pop() || '';
+
     if (canvas.nodes) {
       canvas.nodes = canvas.nodes.map((node) => {
         if (node.type === 'file' && node.file) {
-          const filePath = node.file;
-          const hasSubpath = node.subpath !== undefined;
+          let filePath = node.file;
+          
+          if (folderName && filePath.startsWith(folderName + '/')) {
+            filePath = filePath.slice(folderName.length + 1);
+          }
           
           if (!filePath.match(/\.(md|png|jpg|jpeg|gif|webp|pdf|mp3|canvas)$/i)) {
-            node.file = filePath + '.md';
+            filePath = filePath + '.md';
           }
+          
+          node.file = filePath;
         }
         return node;
       });
@@ -126,7 +133,7 @@ async function walkFolder(
     const encoding: 'utf-8' | 'base64' = TEXT_EXTENSIONS.has(ext) ? 'utf-8' : 'base64';
 
     if (ext === 'canvas') {
-      content = transformCanvasForPublish(content);
+      content = transformCanvasForPublish(content, rootPath);
     }
 
     files.push({ path: repoPath, content, encoding });
