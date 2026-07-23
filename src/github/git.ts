@@ -95,6 +95,7 @@ export async function ensureRepositoryReadyForGit(
 }
 
 async function initializeRepository(token: string, owner: string, repo: string): Promise<void> {
+  // Contents API can create the first commit on an empty repo; Git Data API cannot.
   try {
     await putFileContents(
       token,

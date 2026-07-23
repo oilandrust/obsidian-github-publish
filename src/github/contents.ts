@@ -10,96 +10,10 @@ interface ContentsPutResponse {
   commit: { sha: string };
 }
 
-interface ContentsDeleteResponse {
-  commit: { sha: string };
-}
-
-const INIT_PLACEHOLDER_PATH = '.github-publish-init';
-const MAX_FILE_BYTES = 100 * 1024 * 1024;
-
-/**
- * Upload many files via Contents API (one commit per file).
- * Reliable in Obsidian; avoids Git Database API and PATCH ref updates.
- */
-export async function uploadFilesViaContents(
-  token: string,
-  owner: string,
-  repo: string,
-  files: { path: string; content: Uint8Array }[],
-  message: string,
-  onProgress?: (current: number, total: number) => void,
-): Promise<string> {
-  if (files.length === 0) {
-    throw new Error('No files to upload.');
-  }
-
-  let lastCommitSha = '';
-
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    if (file.content.byteLength > MAX_FILE_BYTES) {
-      throw new Error(`File too large for GitHub (>100MB): ${file.path}`);
-    }
-
-    onProgress?.(i + 1, files.length);
-    const commitMessage =
-      files.length === 1 ? message : `${message}: ${file.path}`;
-
-    lastCommitSha = await putFileContents(
-      token,
-      owner,
-      repo,
-      file.path,
-      file.content,
-      commitMessage,
-    );
-  }
-
-  return lastCommitSha;
-}
-
-export async function deleteFileContents(
-  token: string,
-  owner: string,
-  repo: string,
-  path: string,
-  message: string,
-): Promise<string | undefined> {
-  const sha = await getFileContentsSha(token, owner, repo, path);
-  if (!sha) return undefined;
-
-  log(`DELETE contents/${path}`);
-
-  const response = await githubRequest<ContentsDeleteResponse>(
-    token,
-    'DELETE',
-    `/repos/${owner}/${repo}/contents/${encodeRepoPath(path)}`,
-    { message, sha },
-  );
-
-  return response.commit.sha;
-}
-
-export async function removeInitPlaceholder(
-  token: string,
-  owner: string,
-  repo: string,
-): Promise<void> {
-  const sha = await deleteFileContents(
-    token,
-    owner,
-    repo,
-    INIT_PLACEHOLDER_PATH,
-    'Remove GitHub Publish init placeholder',
-  );
-  if (sha) {
-    log(`Removed ${INIT_PLACEHOLDER_PATH}`);
-  }
-}
-
 /**
  * Upload a file via GitHub Contents API (PUT /repos/.../contents/{path}).
- * Works on empty repos and does not need PATCH (which Obsidian's HTTP client mishandles).
+ * Used to seed an empty repository: the Git Data API returns 409 until the
+ * repo has at least one commit (GitHub limitation, not a client issue).
  */
 export async function putFileContents(
   token: string,
