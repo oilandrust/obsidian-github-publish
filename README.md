@@ -59,6 +59,16 @@ Get in touch! The plugin is in an early prototype version, and I am curious to k
 
 Please report issues and bugs on the [GitHub Issue Page](https://github.com/oilandrust/obsidian-github-publish/issues)
 
+## News
+
+Release notes and product updates are posted on the project wiki:
+
+[News](https://oilandrust.github.io/githubpublish-wiki/News)
+
+## Contributing
+
+The best way to contribute right now is to [open a GitHub issue](https://github.com/oilandrust/obsidian-github-publish/issues) — ask for features, report bugs, or share feedback. Pull requests are welcome, but issue reports and feature requests help most at this stage.
+
 ## Install
 
 Download the latest release, then install into your vault:
