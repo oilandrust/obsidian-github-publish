@@ -8,6 +8,7 @@ import {
   readToolchainText,
 } from '../toolchain/embeddedToolchain';
 import { TELEMETRY_INGEST_URL } from '../telemetry/ingest';
+import { hashFileContent } from './diffVault';
 
 /** Toolchain file users may override per site (Phase 1 customization). */
 export const QUARTZ_CONFIG_FILE = 'quartz.config.yaml';
@@ -132,6 +133,44 @@ export function loadPublishToolchainFiles(
   overrides?: ToolchainOverrides,
 ): RepoFile[] {
   return loadQuartzToolchain(context, overrides);
+}
+
+/**
+ * Plugin-managed toolchain files that are always synced on publish when the
+ * embedded hash drifts. Excludes user-editable quartz.config.yaml.
+ */
+export function loadManagedToolchainFiles(context: PublishBundleContext): RepoFile[] {
+  return loadPublishToolchainFiles(context).filter((file) => file.path !== QUARTZ_CONFIG_FILE);
+}
+
+/** Stable hash of managed toolchain file contents (path-ordered). */
+export function hashManagedToolchain(files: RepoFile[]): string {
+  const parts = [...files]
+    .sort((a, b) => a.path.localeCompare(b.path))
+    .map((file) => `${file.path}:${hashFileContent(file.content)}`);
+  return hashFileContent(new TextEncoder().encode(parts.join('\n')));
+}
+
+export interface ToolchainSync {
+  files: RepoFile[];
+  hash: string;
+}
+
+/**
+ * Returns managed toolchain files to upload when the site's stored hash does
+ * not match the embedded toolchain (always-sync). Legacy sites without a hash
+ * always sync once.
+ */
+export function getToolchainSync(
+  site: PublishedSite,
+  context: PublishBundleContext = publishBundleContextFromSite(site),
+): ToolchainSync | null {
+  const files = loadManagedToolchainFiles(context);
+  const hash = hashManagedToolchain(files);
+  if (site.toolchainHash === hash) {
+    return null;
+  }
+  return { files, hash };
 }
 
 /** Embedded quartz.config.yaml with placeholders resolved for a specific site. */

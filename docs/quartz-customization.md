@@ -56,9 +56,13 @@ The **Edit Quartz config** button on each published-site card opens
 
 ### What is intentionally not editable in Phase 1
 
-`quartz.lock.json` (plugin version pins), `.github/workflows/deploy.yml`, and
-`.gitignore` stay on embedded defaults. Editing them safely needs version-aware
-upgrades and the `workflow` OAuth scope.
+`quartz.lock.json`, `.github/workflows/deploy.yml`, and `.gitignore` stay
+plugin-managed (not user-editable). On each **Publish changes**, the plugin
+compares a stored `toolchainHash` to the embedded toolchain and **always syncs**
+those files when they drift — so workflow fixes ship with a normal content
+publish after upgrading the plugin.
+
+`quartz.config.yaml` remains the only per-site override (tracked via `configHash`).
 
 ## Phase 2 — user static files (planned)
 
@@ -98,27 +102,24 @@ but nothing uploads a user icon today, and CI never copies it.
    `runPublishChanges()` include added/updated/deleted static files, so
    incremental publishes pick up favicon changes.
 
-4. **CI overlay (required).** The deploy workflow currently copies only the
-   config and lockfile onto the cloned engine:
+4. **CI overlay (required).** The deploy workflow copies config/lock into the
+   engine and builds with `-d` pointing at the site checkout's `content/` (so
+   git dates resolve). It must also copy a `quartz/` static overlay when present:
 
    ```yaml
    - name: Overlay user site
      run: |
        rm -rf quartz-engine/content
-       cp -r content quartz-engine/content
-       cp quartz.config.yaml quartz.lock.json quartz-engine/
-   ```
-
-   It must also copy the `quartz/` overlay when present, e.g.:
-
-   ```yaml
        cp quartz.config.yaml quartz.lock.json quartz-engine/
        [ -d quartz ] && cp -r quartz/. quartz-engine/quartz/
+
+   - name: Build site
+     working-directory: quartz-engine
+     run: npx quartz build -d "$GITHUB_WORKSPACE/content"
    ```
 
-   This change ships in `assets/toolchain-quartz/.github/workflows/deploy.yml`,
-   so existing sites only get it after their `deploy.yml` is re-published (a
-   toolchain upgrade), not automatically.
+   This ships in `assets/toolchain-quartz/.github/workflows/deploy.yml`.
+   Existing sites pick it up on the next publish via `toolchainHash` always-sync.
 
 ### Open questions for Phase 2
 

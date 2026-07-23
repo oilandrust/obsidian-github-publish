@@ -9,7 +9,12 @@ import {
   PublishDiff,
 } from './diffVault';
 import { PublishResult } from './initialPublish';
-import { QUARTZ_CONFIG_FILE } from './bundleToolchain';
+import {
+  assertPublishToolchainReady,
+  getToolchainSync,
+  publishBundleContextFromSite,
+  QUARTZ_CONFIG_FILE,
+} from './bundleToolchain';
 import { getSiteConfigChange } from './siteConfig';
 import { scanVaultFolder } from './scanVault';
 import { log } from '../log';
@@ -29,11 +34,13 @@ export async function runPublishChanges(
   log('Starting incremental publish', { owner, repo, contentFolder });
 
   onProgress({ phase: 'preparing', message: 'Scanning vault for changes…' });
+  assertPublishToolchainReady();
   const { files: contentFiles, warnings } = await scanVaultFolder(app.vault, contentFolder);
   const diff = diffAgainstManifest(site.manifest, contentFiles);
   const configChange = await getSiteConfigChange(app, site);
+  const toolchainSync = getToolchainSync(site, publishBundleContextFromSite(site));
 
-  if (countDiffChanges(diff) === 0 && !configChange) {
+  if (countDiffChanges(diff) === 0 && !configChange && !toolchainSync) {
     throw new Error('No unpublished changes found.');
   }
 
@@ -46,8 +53,11 @@ export async function runPublishChanges(
       encoding: 'utf-8',
     });
   }
+  if (toolchainSync) {
+    uploadFiles.push(...toolchainSync.files);
+  }
 
-  const summary = combineChangeSummary(diff, Boolean(configChange));
+  const summary = combineChangeSummary(diff, Boolean(configChange), Boolean(toolchainSync));
   log(`Publishing changes: ${summary}`);
 
   onProgress({
@@ -57,7 +67,7 @@ export async function runPublishChanges(
     uploadTotal: uploadFiles.length + 1,
   });
 
-  const commitMessage = buildCommitMessage(diff, Boolean(configChange));
+  const commitMessage = buildCommitMessage(diff, Boolean(configChange), Boolean(toolchainSync));
 
   const commitSha = await createContentUpdateCommit(
     token,
@@ -92,34 +102,64 @@ export async function runPublishChanges(
     manifest,
     liveUrl: `https://${owner}.github.io/${repo}/`,
     configHash: configChange ? configChange.hash : site.configHash,
+    toolchainHash: toolchainSync ? toolchainSync.hash : site.toolchainHash,
   };
 }
 
-function combineChangeSummary(diff: PublishDiff, configChanged: boolean): string {
+function combineChangeSummary(
+  diff: PublishDiff,
+  configChanged: boolean,
+  toolchainChanged: boolean,
+): string {
   const contentChanges = countDiffChanges(diff);
-  if (!configChanged) {
+  if (!configChanged && !toolchainChanged) {
     return formatDiffSummary(diff);
   }
-  if (contentChanges === 0) {
-    return 'Quartz config changed';
+
+  const parts: string[] = [];
+  if (contentChanges > 0) {
+    parts.push(formatDiffSummary(diff));
   }
-  return `${formatDiffSummary(diff)}, config changed`;
+  if (configChanged) {
+    parts.push(contentChanges === 0 && !toolchainChanged ? 'Quartz config changed' : 'config changed');
+  }
+  if (toolchainChanged) {
+    parts.push(
+      contentChanges === 0 && !configChanged ? 'Toolchain updated' : 'toolchain updated',
+    );
+  }
+  return parts.join(', ');
 }
 
-function buildCommitMessage(diff: PublishDiff, configChanged: boolean): string {
+function buildCommitMessage(
+  diff: PublishDiff,
+  configChanged: boolean,
+  toolchainChanged: boolean,
+): string {
   const changeCount = countDiffChanges(diff);
-  if (changeCount === 0 && configChanged) {
+  if (changeCount === 0 && configChanged && !toolchainChanged) {
     return 'Update Quartz configuration';
   }
+  if (changeCount === 0 && toolchainChanged && !configChanged) {
+    return 'Update publish toolchain';
+  }
+  if (changeCount === 0 && configChanged && toolchainChanged) {
+    return 'Update Quartz configuration and publish toolchain';
+  }
+
   const base =
     changeCount === 1 ? 'Publish vault updates' : `Publish vault updates (${changeCount} files)`;
-  return configChanged ? `${base} + Quartz config` : base;
+  const extras: string[] = [];
+  if (configChanged) extras.push('Quartz config');
+  if (toolchainChanged) extras.push('toolchain');
+  return extras.length > 0 ? `${base} + ${extras.join(' + ')}` : base;
 }
 
 export interface UnpublishedChanges {
   diff: PublishDiff;
   summary: string;
   configChanged: boolean;
+  toolchainChanged: boolean;
 }
 
 export async function detectUnpublishedChanges(
@@ -131,5 +171,11 @@ export async function detectUnpublishedChanges(
   const { files } = await scanVaultFolder(app.vault, site.contentFolder);
   const diff = diffAgainstManifest(site.manifest, files);
   const configChanged = (await getSiteConfigChange(app, site)) !== null;
-  return { diff, summary: combineChangeSummary(diff, configChanged), configChanged };
+  const toolchainChanged = getToolchainSync(site) !== null;
+  return {
+    diff,
+    summary: combineChangeSummary(diff, configChanged, toolchainChanged),
+    configChanged,
+    toolchainChanged,
+  };
 }

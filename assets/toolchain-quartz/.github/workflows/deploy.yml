@@ -60,8 +60,9 @@ jobs:
 
       - name: Overlay user site
         run: |
+          # Point Quartz at the site checkout's content via -d so
+          # CreatedModifiedDate discovers the wiki git history (not the engine's).
           rm -rf quartz-engine/content
-          cp -r content quartz-engine/content
           cp quartz.config.yaml quartz.lock.json quartz-engine/
 
       - name: Install dependencies
@@ -76,7 +77,7 @@ jobs:
 
       - name: Build site
         working-directory: quartz-engine
-        run: npx quartz build
+        run: npx quartz build -d "$GITHUB_WORKSPACE/content"
 
       - uses: actions/upload-pages-artifact@v5
         with:

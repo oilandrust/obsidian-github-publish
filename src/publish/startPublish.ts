@@ -69,6 +69,7 @@ export function startPublish(plugin: GitHubPublishHost, config?: SetupConfig): v
         result.commitSha,
         result.manifest,
         result.configHash,
+        result.toolchainHash,
       );
       plugin.settings.publishedSites = upsertPublishedSite(plugin.settings.publishedSites, site);
       plugin.settings.savedSetup = null;
@@ -118,6 +119,7 @@ export function startPublishChanges(plugin: GitHubPublishHost, site: PublishedSi
           lastPublishedCommitSha: result.commitSha,
           manifest: result.manifest,
           configHash: result.configHash,
+          toolchainHash: result.toolchainHash,
         },
       );
       await plugin.saveSettings();
@@ -143,7 +145,9 @@ export async function hasUnpublishedChanges(
 
   const result = await detectUnpublishedChanges(plugin.app, site);
   if (!result) return false;
-  return countDiffChanges(result.diff) > 0;
+  return (
+    countDiffChanges(result.diff) > 0 || result.configChanged || result.toolchainChanged
+  );
 }
 
 export function getPublishableSites(plugin: GitHubPublishHost): PublishedSite[] {

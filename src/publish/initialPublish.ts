@@ -7,6 +7,7 @@ import {
   loadPublishToolchainFiles,
   publishBundleContextFromConfig,
   assertPublishToolchainReady,
+  hashManagedToolchain,
   QUARTZ_CONFIG_FILE,
 } from './bundleToolchain';
 import { buildContentManifest, hashFileContent } from './diffVault';
@@ -22,6 +23,8 @@ export interface PublishResult {
   liveUrl: string;
   /** Hash of the quartz.config.yaml published in this run. */
   configHash?: string;
+  /** Hash of plugin-managed toolchain files published in this run. */
+  toolchainHash?: string;
 }
 
 export async function runInitialPublish(
@@ -104,6 +107,9 @@ export async function runInitialPublish(
   const manifest = buildContentManifest(allFiles);
   const configFile = toolchainFiles.find((file) => file.path === QUARTZ_CONFIG_FILE);
   const configHash = configFile ? hashFileContent(configFile.content) : undefined;
+  const toolchainHash = hashManagedToolchain(
+    toolchainFiles.filter((file) => file.path !== QUARTZ_CONFIG_FILE),
+  );
 
   if (warnings.length > 0) {
     console.warn('GitHub Publish warnings:', warnings);
@@ -116,6 +122,7 @@ export async function runInitialPublish(
     manifest,
     liveUrl: `https://${owner}.github.io/${repoName}/`,
     configHash,
+    toolchainHash,
   };
 }
 

@@ -142,7 +142,8 @@ export class PublishedSiteCard {
         return;
       }
 
-      const hasChanges = countDiffChanges(result.diff) > 0 || result.configChanged;
+      const hasChanges =
+        countDiffChanges(result.diff) > 0 || result.configChanged || result.toolchainChanged;
       changesStatus.removeClass(
         'github-publish-status-checking',
         'github-publish-status-live',

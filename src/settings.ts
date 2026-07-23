@@ -11,6 +11,11 @@ export interface PublishedSite {
   quartzCommitSha: string | null;
   /** Hash of the quartz.config.yaml last published for this site. */
   configHash?: string;
+  /**
+   * Hash of plugin-managed toolchain files last published (workflow, lockfile, etc.).
+   * Excludes user-editable quartz.config.yaml (tracked via configHash).
+   */
+  toolchainHash?: string;
 }
 
 export interface PluginSettings {
