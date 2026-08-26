@@ -1,7 +1,7 @@
 import { App } from 'obsidian';
 import { enableGitHubPages } from '../github/pages';
 import { createInitialCommit, ensureRepositoryReadyForGit } from '../github/git';
-import { resolveRepository } from '../github/repos';
+import { resolveRepository, githubPagesUrl } from '../github/repos';
 import { ProgressState, RepoFile, SetupConfig } from '../settings';
 import {
   loadPublishToolchainFiles,
@@ -12,6 +12,7 @@ import {
 } from './bundleToolchain';
 import { buildContentManifest, hashFileContent } from './diffVault';
 import { ensureQuartzHomePage } from './ensureQuartzHomePage';
+import { buildPublishedSiteReadme } from './siteReadme';
 import { scanVaultFolder } from './scanVault';
 import { log } from '../log';
 
@@ -67,7 +68,11 @@ export async function runInitialPublish(
 
   const bundleContext = publishBundleContextFromConfig(config, owner);
   const toolchainFiles = loadPublishToolchainFiles(bundleContext);
-  const allFiles: RepoFile[] = sortUploadFiles([...toolchainFiles, ...contentFiles]);
+  const siteFiles: RepoFile[] = [...toolchainFiles, ...contentFiles];
+  if (config.repoMode === 'create' || resolved.created) {
+    siteFiles.push(buildPublishedSiteReadme());
+  }
+  const allFiles: RepoFile[] = sortUploadFiles(siteFiles);
   log(`Prepared ${contentFiles.length} content files and ${toolchainFiles.length} toolchain files`, {
     fileCount: allFiles.length,
     quartzCommitSha: bundleContext.quartzCommitSha,
@@ -120,7 +125,7 @@ export async function runInitialPublish(
     repo: repoName,
     commitSha,
     manifest,
-    liveUrl: `https://${owner}.github.io/${repoName}/`,
+    liveUrl: githubPagesUrl(owner, repoName),
     configHash,
     toolchainHash,
   };

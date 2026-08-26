@@ -36,12 +36,29 @@ export async function createRepo(
   name: string,
   isPrivate = false,
   autoInit = false,
+  homepage?: string,
 ): Promise<GitHubRepo> {
   return githubRequest<GitHubRepo>(token, 'POST', '/user/repos', {
     name,
     private: isPrivate,
     auto_init: autoInit,
+    ...(homepage ? { homepage } : {}),
   });
+}
+
+export async function updateRepoHomepage(
+  token: string,
+  owner: string,
+  repo: string,
+  homepage: string,
+): Promise<GitHubRepo> {
+  return githubRequest<GitHubRepo>(token, 'PATCH', `/repos/${owner}/${repo}`, {
+    homepage,
+  });
+}
+
+export function githubPagesUrl(owner: string, repo: string): string {
+  return `https://${owner}.github.io/${repo}/`;
 }
 
 export async function resolveRepository(
@@ -59,8 +76,10 @@ export async function resolveRepository(
     };
   }
 
+  const homepage = githubPagesUrl(username, repoName);
+
   try {
-    const created = await createRepo(token, repoName, false, false);
+    const created = await createRepo(token, repoName, false, false, homepage);
     return {
       owner: created.owner.login,
       repoName: created.name,
@@ -70,6 +89,7 @@ export async function resolveRepository(
     if (error instanceof GitHubApiError && error.status === 422) {
       log(`Repository ${username}/${repoName} already exists — continuing publish`);
       const existing = await getRepo(token, username, repoName);
+      await updateRepoHomepage(token, existing.owner.login, existing.name, homepage);
       return {
         owner: existing.owner.login,
         repoName: existing.name,
