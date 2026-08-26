@@ -40,12 +40,12 @@ export async function runInitialPublish(
   });
   onProgress({ phase: 'preparing', message: 'Scanning vault folder…' });
 
-  let { files: contentFiles, warnings } = await scanVaultFolder(app.vault, config.contentFolder);
+  await ensureQuartzHomePage(app.vault, config.contentFolder, config.siteName);
+
+  const { files: contentFiles, warnings } = await scanVaultFolder(app.vault, config.contentFolder);
   if (contentFiles.length === 0) {
     throw new Error('No publishable files found in the selected folder.');
   }
-
-  contentFiles = ensureQuartzHomePage(contentFiles, config.siteName);
 
   onProgress({ phase: 'preparing', message: 'Loading publish toolchain…' });
   assertPublishToolchainReady();

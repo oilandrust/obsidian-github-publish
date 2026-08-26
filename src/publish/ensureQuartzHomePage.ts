@@ -1,27 +1,30 @@
-import { RepoFile } from '../settings';
+import { Vault } from 'obsidian';
 
-const QUARTZ_INDEX_PATH = 'content/index.md';
+const INDEX_FILENAME = 'index.md';
 
-export function ensureQuartzHomePage(contentFiles: RepoFile[], siteName: string): RepoFile[] {
-  if (contentFiles.some((file) => file.path === QUARTZ_INDEX_PATH)) {
-    return contentFiles;
+/**
+ * Ensures the published folder has a top-level index.md for Quartz's home page.
+ * Creates it in the vault on first publish when missing; returns true if created.
+ */
+export async function ensureQuartzHomePage(
+  vault: Vault,
+  contentFolder: string,
+  siteName: string,
+): Promise<boolean> {
+  const indexPath = contentFolder ? `${contentFolder}/${INDEX_FILENAME}` : INDEX_FILENAME;
+  if (vault.getAbstractFileByPath(indexPath)) {
+    return false;
   }
 
   const markdown = `---
 title: ${escapeYamlString(siteName)}
 ---
 
-Welcome to **${siteName}**.
+This file has been created automatically by GitHub Publish plugin. Quartz expects a 'index.md' at the top level to render the home page of your site, feel free to edit the title and write your content!
 `;
 
-  return [
-    ...contentFiles,
-    {
-      path: QUARTZ_INDEX_PATH,
-      content: new TextEncoder().encode(markdown),
-      encoding: 'utf-8',
-    },
-  ];
+  await vault.create(indexPath, markdown);
+  return true;
 }
 
 function escapeYamlString(value: string): string {

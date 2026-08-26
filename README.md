@@ -6,14 +6,17 @@ The plugin uses [Quartz](https://quartz.jzhao.xyz/) as a site generator and GitH
 - Authenticate with your GitHub account,
 - Give permissions (public repo and actions)
 - Select the folder you want to publish, and the name of the site
-- Profit!
+- Your site will be live in a minute!
 
 ![Setup Demo](screenshots/setup_demo.gif)
 
 ## GitHub Permissions
 The plugin requires a few permissions from your GitHub account; those are the permissions and why we ask for them.
-- **Public Repo**: We use this permission to create new repositories on your behalf, list existing public repositories, and create commits to upload content.
-- **Workflow**: We use this to set up GitHub Actions that build the website when you publish new content.
+
+> We don't store your OAuth token in any service or database, the token is only stored in the Obsidian plugin data on your machine and used when you publish or update a site. We don't keep track of registered GitHub user ids, only GitHub does.
+
+- **Public Repo**: The plugin uses this permission to create new repositories on your behalf, list existing public repositories, and create commits to upload content.
+- **Workflow**: The plugin uses this to set up GitHub Actions that build the website when you publish new content.
 We do not read any data from your repositories other than that, and the plugin does not delete repositories or touch data outside the content/ folder.
 ## Live Demo
 
@@ -43,6 +46,10 @@ The plugin keeps track of your published sites, lets you know when there are cha
 2. On first publish, the plugin creates a repo containing your notes under `content/`, a pinned [Quartz](https://quartz.jzhao.xyz/) toolchain, and a deploy workflow.
 3. A commit to `main` triggers GitHub Actions, which builds `dist/` and deploys to GitHub Pages.
 4. Later publishes diff your vault folder against a stored manifest and push only what changed.
+
+## `index.md` and home page
+
+Quartz expects an `index.md` file in the top level `content/` folder. If the folder that you try to publish do not contain an `index.md`, the plugin will create one automatically, feel free to edit it.
 
 ## Configuration
 
