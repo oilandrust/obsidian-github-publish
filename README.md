@@ -42,27 +42,27 @@ The plugin keeps track of your published sites, lets you know when there are cha
 
 ## How it works
 
-1. You authenticate with GitHub (device flow OAuth).
+1. You authenticate with GitHub (Click "Connect to GitHub" in the settings, enter the one-time code that appears on the settings page).
 2. On first publish, the plugin creates a repo containing your notes under `content/`, a pinned [Quartz](https://quartz.jzhao.xyz/) toolchain, and a deploy workflow.
 3. A commit to `main` triggers GitHub Actions, which builds `dist/` and deploys to GitHub Pages.
-4. Later publishes diff your vault folder against a stored manifest and push only what changed.
+4. Later publishes the diff of your vault folder against a stored manifest and pushes only what changed.
 
 ## `index.md` and home page
 
-Quartz expects an `index.md` file in the top level `content/` folder. If the folder that you try to publish do not contain an `index.md`, the plugin will create one automatically, feel free to edit it.
+Quartz expects an `index.md` file in the top-level `content/` folder. If the folder that you try to publish does not contain an `index.md`, the plugin will create one automatically; feel free to edit it.
 
 ## Configuration
 
-The pluggin settings lets you edit Quartz configuration file in the settings. The configuration is published with the content when it changed and is applied on a new publish build.
+The plugin settings let you edit the Quartz configuration file in the settings. The configuration is published with the content when it changes and is applied on a new publish build.
 
-This allows to chose and configure Quartz pluggins, themes, colors, analytics, etc.
+This allows you to choose and configure Quartz plug-ins, themes, colors, analytics, etc.
 More info about Quartz configuration can be found [here](https://quartz.jzhao.xyz/configuration).
 
-## Enjoying the pluggin or missing some features?
+## Enjoying the plugin or missing some features?
 
 Get in touch! The plugin is in an early prototype version, and I am curious to know what features you would like to see. Get in touch directly via email: orouiller@gmail.com.
 
-## Some Issue?
+## Some Issues?
 
 Please report issues and bugs on the [GitHub Issue Page](https://github.com/oilandrust/obsidian-github-publish/issues)
 
