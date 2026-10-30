@@ -152,25 +152,26 @@ export class ProgressModal extends Modal {
     }
   }
 
-  private getPhases(): { phase: ProgressPhase; label: string }[] {
+  private getSteps(): { label: string; phases: ProgressPhase[] }[] {
     if (this.options?.mode === 'incremental') {
       return [
-        { phase: 'preparing', label: 'Detect changes' },
-        { phase: 'uploading', label: 'Upload changed files' },
-        { phase: 'waiting-build', label: 'Build site (GitHub Actions)' },
-        { phase: 'waiting-deploy', label: 'Deploy to GitHub Pages' },
-        { phase: 'done', label: 'Site is live' },
+        { label: 'Detect changes', phases: ['preparing'] },
+        { label: 'Upload changed files', phases: ['uploading'] },
+        { label: 'Build site (GitHub Actions)', phases: ['waiting-build'] },
+        { label: 'Deploy to GitHub Pages', phases: ['waiting-deploy'] },
+        { label: 'Site is live', phases: ['done'] },
       ];
     }
 
     return [
-      { phase: 'preparing', label: 'Prepare files' },
-      { phase: 'creating-repo', label: 'Create repository' },
-      { phase: 'configuring-pages', label: 'Configure GitHub Pages' },
-      { phase: 'uploading', label: 'Create single Git commit' },
-      { phase: 'waiting-build', label: 'Build site (GitHub Actions)' },
-      { phase: 'waiting-deploy', label: 'Deploy to GitHub Pages' },
-      { phase: 'done', label: 'Site is live' },
+      {
+        label: 'Create and configure repository',
+        phases: ['preparing', 'creating-repo', 'configuring-pages'],
+      },
+      {
+        label: 'Commit and push files',
+        phases: ['uploading', 'waiting-build', 'waiting-deploy'],
+      },
     ];
   }
 
@@ -187,22 +188,21 @@ export class ProgressModal extends Modal {
     this.renderSubtitle(contentEl);
 
     const steps = childDiv(contentEl, { cls: 'github-publish-steps' });
-    const phases = this.getPhases();
-
-    const order = phases.map((p) => p.phase);
-    const failedIndex =
-      this.state.phase === 'error' ? order.indexOf(this.lastActivePhase) : -1;
+    const progressSteps = this.getSteps();
+    const activePhase = this.state.phase === 'error' ? this.lastActivePhase : this.state.phase;
     const currentIndex =
-      this.state.phase === 'error' ? failedIndex : order.indexOf(this.state.phase);
+      this.state.phase === 'done'
+        ? progressSteps.length
+        : progressSteps.findIndex((step) => step.phases.includes(activePhase));
 
-    for (let i = 0; i < phases.length; i++) {
-      const phase = phases[i];
-      if (!phase) continue;
-      const { label } = phase;
+    for (let i = 0; i < progressSteps.length; i++) {
+      const progressStep = progressSteps[i];
+      if (!progressStep) continue;
+      const { label } = progressStep;
       const row = childDiv(steps, { cls: 'github-publish-step' });
       const icon = childSpan(row, { cls: 'github-publish-step-icon' });
 
-      if (this.state.phase === 'error' && i === failedIndex) {
+      if (this.state.phase === 'error' && i === currentIndex) {
         row.addClass('github-publish-step-error');
         icon.setText('✗');
       } else if (i < currentIndex || this.state.phase === 'done') {

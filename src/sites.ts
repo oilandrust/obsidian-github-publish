@@ -1,4 +1,5 @@
 import { PluginSettings, PublishedSite, SetupConfig } from './settings';
+import { isContentFolderSet } from './utils/vault';
 
 export interface LegacyPluginSettings extends PluginSettings {
   owner?: string | null;
@@ -92,7 +93,7 @@ export function migratePluginSettings(raw: LegacyPluginSettings): PluginSettings
     return settings;
   }
 
-  if (raw.owner && raw.repo && raw.lastPublishedCommitSha && raw.contentFolder) {
+  if (raw.owner && raw.repo && raw.lastPublishedCommitSha && isContentFolderSet(raw.contentFolder)) {
     settings.publishedSites = [
       {
         id: siteId(raw.owner, raw.repo),

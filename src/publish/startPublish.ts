@@ -15,6 +15,7 @@ import { repoActionsUrl } from '../github/actions';
 import { runInitialPublish } from './initialPublish';
 import { detectUnpublishedChanges, runPublishChanges } from './publishChanges';
 import { ProgressModal } from '../ui/ProgressModal';
+import { isContentFolderSet } from '../utils/vault';
 
 export function saveSetupConfig(plugin: GitHubPublishHost, config: SetupConfig): void {
   plugin.settings.savedSetup = config;
@@ -139,7 +140,7 @@ export async function hasUnpublishedChanges(
   plugin: GitHubPublishHost,
   site: PublishedSite,
 ): Promise<boolean> {
-  if (!isPublishedSite(site) || !site.contentFolder) {
+  if (!isPublishedSite(site) || !isContentFolderSet(site.contentFolder)) {
     return false;
   }
 

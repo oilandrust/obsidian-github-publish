@@ -2,9 +2,9 @@ import { TAbstractFile, TFolder, Vault } from 'obsidian';
 import { RepoFile } from '../settings';
 import {
   asFile,
-  getVaultFolder,
-  getVaultRootFolder,
+  contentScanRoot,
   readVaultBinary,
+  resolveVaultFolder,
 } from '../utils/vault';
 
 const EXCLUDED_DIR_NAMES = new Set(['.git', 'node_modules']);
@@ -92,12 +92,13 @@ function shouldExcludeDir(vault: Vault, folder: TFolder): boolean {
 }
 
 export async function scanVaultFolder(vault: Vault, folderPath: string): Promise<ScanResult> {
-  const folder = getVaultFolder(vault, folderPath);
+  const folder = resolveVaultFolder(vault, folderPath);
+  const rootPath = contentScanRoot(folder);
 
   const files: RepoFile[] = [];
   const warnings: string[] = [];
 
-  await walkFolder(vault, folder, folderPath, files, warnings);
+  await walkFolder(vault, folder, rootPath, files, warnings);
 
   return { files, warnings };
 }
@@ -155,18 +156,19 @@ function shouldSkip(relativePath: string): true | string | false {
 }
 
 export function countFilesInFolder(vault: Vault, folderPath: string): number {
-  const folder = folderPath === '' ? getVaultRootFolder(vault) : getVaultFolder(vault, folderPath);
+  const folder = resolveVaultFolder(vault, folderPath);
+  const rootPath = contentScanRoot(folder);
 
   let count = 0;
   const walk = (node: TAbstractFile) => {
     if (node instanceof TFolder) {
-      if (shouldExcludeDir(vault, node)) return;
+      if (!node.isRoot() && shouldExcludeDir(vault, node)) return;
       node.children.forEach(walk);
       return;
     }
     const file = asFile(node);
     if (!file) return;
-    const relative = file.path.slice(folderPath.length).replace(/^\//, '');
+    const relative = file.path.slice(rootPath.length).replace(/^\//, '');
     if (shouldSkip(relative) === false) count++;
   };
   walk(folder);

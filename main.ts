@@ -24,6 +24,7 @@ import {
 import { buildCommit, isDevBuild, showAdvancedSettings } from './src/buildFlags';
 import { childDiv, childEl, addCopyButton } from './src/ui/dom';
 import { loadPluginSettingsData } from './src/utils/pluginData';
+import { formatContentFolder } from './src/utils/vault';
 
 export default class GitHubPublishPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
@@ -344,7 +345,7 @@ class GitHubPublishSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName('Saved setup').setHeading();
     const summary = childEl(containerEl, 'dl', { cls: 'github-publish-summary' });
     this.addSummaryRow(summary, 'Site name', saved.siteName);
-    this.addSummaryRow(summary, 'Vault folder', saved.contentFolder);
+    this.addSummaryRow(summary, 'Vault folder', formatContentFolder(saved.contentFolder));
     this.addSummaryRow(
       summary,
       'Repository',

@@ -1,9 +1,11 @@
 import { App, TFolder } from 'obsidian';
+import { normalizeContentFolder } from '../utils/vault';
 import { childDiv, childEl, childSpan } from './dom';
 
 export interface FolderTreeOptions {
   selectedPath: string;
   expandedPaths: Set<string>;
+  vaultName: string;
   onSelect: (path: string) => void;
   onToggleExpand: (path: string) => void;
 }
@@ -18,29 +20,26 @@ export class FolderTree {
   render(): void {
     this.container.empty();
     const tree = childDiv(this.container, { cls: 'github-publish-folder-tree' });
+    this.renderFolder(tree, this.app.vault.getRoot(), 0);
+  }
 
-    const root = this.app.vault.getRoot();
-    const topFolders = root.children
-      .filter((child): child is TFolder => child instanceof TFolder)
-      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  private selectionPath(folder: TFolder): string {
+    return folder.isRoot() ? '' : folder.path;
+  }
 
-    for (const folder of topFolders) {
-      this.renderFolder(tree, folder, 0);
+  private folderLabel(folder: TFolder): string {
+    if (folder.isRoot()) {
+      return this.options.vaultName.trim() || 'Vault root';
     }
-
-    if (topFolders.length === 0) {
-      childEl(tree, 'p', {
-        cls: 'github-publish-folder-tree-empty',
-        text: 'No folders found in this vault.',
-      });
-    }
+    return folder.name;
   }
 
   private renderFolder(parent: HTMLElement, folder: TFolder, depth: number): void {
     const subfolders = folder.children.filter((child): child is TFolder => child instanceof TFolder);
     const hasSubfolders = subfolders.length > 0;
     const isExpanded = this.options.expandedPaths.has(folder.path);
-    const isSelected = this.options.selectedPath === folder.path;
+    const isSelected =
+      normalizeContentFolder(this.options.selectedPath) === this.selectionPath(folder);
 
     const row = childDiv(parent, {
       cls: `github-publish-folder-row${isSelected ? ' is-selected' : ''}`,
@@ -63,10 +62,10 @@ export class FolderTree {
 
     const label = childSpan(row, {
       cls: 'github-publish-folder-label',
-      text: folder.name,
+      text: this.folderLabel(folder),
     });
     label.addEventListener('click', () => {
-      this.options.onSelect(folder.path);
+      this.options.onSelect(this.selectionPath(folder));
     });
 
     if (hasSubfolders && isExpanded) {

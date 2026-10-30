@@ -78,9 +78,9 @@ export async function runInitialPublish(
     quartzCommitSha: bundleContext.quartzCommitSha,
   });
 
-  onProgress({ phase: 'uploading', message: 'Preparing repository for Git upload…' });
+  onProgress({ phase: 'creating-repo', message: 'Preparing repository for Git upload…' });
   await ensureRepositoryReadyForGit(token, owner, repoName, (message) => {
-    onProgress({ phase: 'uploading', message });
+    onProgress({ phase: 'creating-repo', message });
   });
 
   onProgress({ phase: 'configuring-pages', message: 'Configuring GitHub Pages…' });

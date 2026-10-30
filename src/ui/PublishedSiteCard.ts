@@ -10,6 +10,7 @@ import {
 } from '../quartz/versions';
 import { showAdvancedSettings } from '../buildFlags';
 import { GitHubPublishHost } from '../pluginHost';
+import { formatContentFolder } from '../utils/vault';
 import { childDiv, childEl, childSpan, addTrashButton } from './dom';
 import { UntrackSiteModal } from './UntrackSiteModal';
 import { QuartzConfigModal } from './QuartzConfigModal';
@@ -43,7 +44,7 @@ export class PublishedSiteCard {
     });
 
     const summary = childEl(card, 'dl', { cls: 'github-publish-summary' });
-    this.addSummaryRow(summary, 'Vault folder', this.site.contentFolder);
+    this.addSummaryRow(summary, 'Vault folder', formatContentFolder(this.site.contentFolder));
 
     if (showAdvancedSettings) {
       const sha = resolveQuartzCommitSha(this.site.quartzCommitSha);

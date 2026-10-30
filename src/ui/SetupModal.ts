@@ -4,6 +4,7 @@ import { GitHubPublishHost } from '../pluginHost';
 import { SetupConfig } from '../settings';
 import { countFilesInFolder } from '../publish/scanVault';
 import { saveSetupConfig, startPublish } from '../publish/startPublish';
+import { formatContentFolder, normalizeContentFolder } from '../utils/vault';
 import { FolderTree } from './FolderTree';
 import { childDiv, childEl, addCopyButton } from './dom';
 
@@ -88,6 +89,7 @@ export class SetupModal extends Modal {
     this.repoName = '';
     this.siteNameEdited = false;
     this.repoNameEdited = false;
+    this.expandedFolders = new Set([this.app.vault.getRoot().path]);
     this.resetRepoNameAvailability();
     this.keydownHandler = (event: KeyboardEvent) => {
       this.handleWizardKeydown(event);
@@ -312,12 +314,7 @@ export class SetupModal extends Modal {
       text: 'Choose a name for your published site. This appears in the browser tab and site header.',
     });
 
-    const suggested = suggestSiteNameFromFolder(this.contentFolder, this.app.vault.getName());
-    const siteNameSetting = new Setting(container).setName('Site name');
-    if (!this.siteNameEdited && this.siteName === suggested) {
-      siteNameSetting.setDesc(`Suggested from folder: ${this.contentFolder || '(vault root)'}`);
-    }
-    siteNameSetting.addText((text) => {
+    new Setting(container).setName('Site name').addText((text) => {
         text.setValue(this.siteName).onChange((value: string) => {
           this.siteName = value;
           this.siteNameEdited = true;
@@ -334,17 +331,16 @@ export class SetupModal extends Modal {
       text: 'Select the vault folder to publish. Its contents will be copied to content/ in your GitHub repository.',
     });
 
-    if (this.contentFolder) {
-      childEl(container, 'p', {
-        cls: 'github-publish-selected-folder',
-        text: `Selected: ${this.contentFolder || '(vault root)'}`,
-      });
-    }
+    childEl(container, 'p', {
+      cls: 'github-publish-selected-folder',
+      text: `Selected: ${formatContentFolder(this.contentFolder)}`,
+    });
 
     const treeHost = childDiv(container, { cls: 'github-publish-folder-tree-host' });
     new FolderTree(this.app, treeHost, {
       selectedPath: this.contentFolder,
       expandedPaths: this.expandedFolders,
+      vaultName: this.app.vault.getName(),
       onSelect: (path) => {
         this.contentFolder = path;
         this.applyFolderSuggestions();
@@ -382,11 +378,7 @@ export class SetupModal extends Modal {
       const suggested = suggestRepoNameFromSiteName(this.siteName);
       new Setting(container)
         .setName('New repository name')
-        .setDesc(
-          this.repoNameEdited || this.repoName !== suggested
-            ? 'Lowercase letters, numbers, and hyphens. Will be created as public.'
-            : `Suggested from site name. Lowercase letters, numbers, and hyphens. Will be created as public.`,
-        )
+        .setDesc('Lowercase letters, numbers, and hyphens. Will be created as public.')
         .addText((text) => {
           text
             .setValue(this.repoName)
@@ -437,14 +429,12 @@ export class SetupModal extends Modal {
   }
 
   private renderConfirmStep(container: HTMLElement): void {
-    const fileCount = this.contentFolder
-      ? countFilesInFolder(this.app.vault, this.contentFolder)
-      : 0;
+    const fileCount = countFilesInFolder(this.app.vault, this.contentFolder);
 
     childEl(container, 'p', { text: 'Review your publish settings:' });
 
     const summary = childEl(container, 'dl', { cls: 'github-publish-summary' });
-    this.addSummaryRow(summary, 'Vault folder', this.contentFolder || '(vault root)');
+    this.addSummaryRow(summary, 'Vault folder', formatContentFolder(this.contentFolder));
     this.addSummaryRow(summary, 'Site name', this.siteName);
     this.addSummaryRow(summary, 'GitHub account', this.plugin.settings.githubUsername ?? '');
     this.addSummaryRow(
@@ -524,11 +514,7 @@ export class SetupModal extends Modal {
   private validateStep(): boolean {
     switch (this.step) {
       case 1: {
-        const folderPath = this.contentFolder;
-        if (folderPath !== '' && !folderPath.trim()) {
-          new Notice('Enter a vault folder path.');
-          return false;
-        }
+        const folderPath = normalizeContentFolder(this.contentFolder);
         const folder =
           folderPath === ''
             ? this.app.vault.getRoot()
@@ -571,7 +557,7 @@ export class SetupModal extends Modal {
 
     const config: SetupConfig = {
       siteName: this.siteName.trim(),
-      contentFolder: this.contentFolder.trim(),
+      contentFolder: normalizeContentFolder(this.contentFolder),
       repoMode: this.repoMode,
       repoName: this.repoName.trim(),
     };

@@ -1,6 +1,8 @@
 import { App } from 'obsidian';
 import { createContentUpdateCommit } from '../github/git';
+import { log } from '../log';
 import { PublishedSite, ProgressState, RepoFile } from '../settings';
+import { isContentFolderSet } from '../utils/vault';
 import {
   countDiffChanges,
   diffAgainstManifest,
@@ -17,7 +19,6 @@ import {
 } from './bundleToolchain';
 import { getSiteConfigChange } from './siteConfig';
 import { scanVaultFolder } from './scanVault';
-import { log } from '../log';
 
 export async function runPublishChanges(
   app: App,
@@ -27,7 +28,7 @@ export async function runPublishChanges(
 ): Promise<PublishResult> {
   const { owner, repo, contentFolder } = site;
 
-  if (!owner || !repo || !contentFolder) {
+  if (!owner || !repo || !isContentFolderSet(contentFolder)) {
     throw new Error('Published site configuration is incomplete.');
   }
 
@@ -166,7 +167,7 @@ export async function detectUnpublishedChanges(
   app: App,
   site: PublishedSite,
 ): Promise<UnpublishedChanges | null> {
-  if (!site.contentFolder) return null;
+  if (!isContentFolderSet(site.contentFolder)) return null;
 
   const { files } = await scanVaultFolder(app.vault, site.contentFolder);
   const diff = diffAgainstManifest(site.manifest, files);
