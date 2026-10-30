@@ -18,6 +18,9 @@ const INCLUDED_EXTENSIONS = new Set([
   '.jpeg',
   '.gif',
   '.webp',
+  '.svg',
+  '.avif',
+  '.bmp',
   '.pdf',
   '.mp3',
 ]);

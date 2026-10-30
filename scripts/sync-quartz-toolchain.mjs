@@ -80,7 +80,10 @@ jobs:
         run: |
           # Point Quartz at the site checkout's content via -d so
           # CreatedModifiedDate discovers the wiki git history (not the engine's).
+          # Expose the same folder as ./content so plugins can resolve frontmatter
+          # images by filename, the way Obsidian does.
           rm -rf quartz-engine/content
+          ln -s "\$GITHUB_WORKSPACE/content" quartz-engine/content
           cp quartz.config.yaml quartz.lock.json quartz-engine/
 
       - name: Install dependencies
